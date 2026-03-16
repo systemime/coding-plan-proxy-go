@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](https://github.com/systemime/coding-plan-proxy-go)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -68,9 +68,11 @@ Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.)
 | 🎭 **Tool Disguise** | Appear as OpenCode, OpenClaw, or custom tool |
 | 🔌 **Universal Compatibility** | Works with ANY OpenAI-compatible client |
 | 🌐 **Multi-Provider** | Support for 6+ major LLM providers |
-| 📊 **Usage Analytics** | Track token consumption in real-time |
+| 📊 **Usage Analytics** | Track token consumption in real-time with SQLite storage |
 | 🔒 **Local Auth** | Protect your proxy with custom API key |
 | ⚡ **High Performance** | Built in Go for maximum efficiency |
+| 🔧 **Flexible Configuration** | Support TOML config file, environment variables, and custom API URLs |
+| 📈 **Rate Limiting** | Built-in rate limiting to prevent abuse |
 
 ### 🚀 Quick Start
 
@@ -92,15 +94,23 @@ Edit `/opt/project/coding-plan-proxy/config/config.toml`:
 [server]
 listen_host = "127.0.0.1"
 listen_port = 8787
+timeout = 120                       # Request timeout (seconds)
+rate_limit_requests = 100           # Rate limit per 5 minutes
 
 [auth]
-provider = "zhipu"                    # Your Coding Plan provider
+provider = "zhipu"                  # Your Coding Plan provider
 api_key = "your-coding-plan-api-key"  # Your Coding Plan API Key
-local_api_key = "sk-local-secret"     # Key for your tools to use
+local_api_key = "sk-local-secret"   # Key for your tools to use
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"            # Disguise as OpenCode
+disguise_tool = "opencode"          # Disguise as OpenCode
+# custom_user_agent = ""            # Custom User-Agent (when disguise_tool = "custom")
+
+[api]
+# Optional: Custom API URLs
+base_url = ""                       # Custom base URL
+coding_url = ""                     # Custom coding endpoint URL
 ```
 
 #### 3. Start
@@ -126,11 +136,12 @@ Configure your AI coding tool to use:
 | Provider | Identifier | Models |
 |----------|------------|--------|
 | **Zhipu GLM** | `zhipu` | glm-4-flash, glm-4-plus, glm-4-air, glm-4-long |
-| **Zhipu GLM v2** | `zhipu_v2` | glm-4-flash, glm-4-plus, glm-4.7, glm-5 |
-| **Alibaba Cloud** | `aliyun` | qwen-turbo, qwen-plus, qwen-max, qwen2.5-coder |
-| **MiniMax** | `minimax` | abab6.5s-chat, abab6.5g-chat |
+| **Zhipu GLM v2** | `zhipu_v2` | glm-4-flash, glm-4-plus, glm-4-air, glm-4-long, glm-4.7, glm-5 |
+| **Alibaba Cloud** | `aliyun` | qwen-turbo, qwen-plus, qwen-max, qwen2.5-coder-32b-instruct |
+| **MiniMax** | `minimax` | abab6.5s-chat, abab6.5g-chat, abab6.5-chat |
 | **DeepSeek** | `deepseek` | deepseek-chat, deepseek-coder |
 | **Moonshot** | `moonshot` | moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k |
+| **Custom** | `custom` | Use `[api]` section to configure custom URLs |
 
 ### 🎭 Tool Disguise Options
 
@@ -143,28 +154,52 @@ disguise_tool = "opencode"   # OpenCode (default)
 # custom_user_agent = "YourCustomTool/1.0"
 ```
 
-### 📊 Statistics
-
-```bash
-# View usage statistics
-coding-plan-proxy stats
-
-# View connection info
-coding-plan-proxy show
-
-# JSON format for scripting
-coding-plan-proxy show --json
-```
-
 ### 📡 API Endpoints
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/` | GET | Service information |
 | `/v1/chat/completions` | POST | Chat completions (streaming supported) |
 | `/v1/embeddings` | POST | Text embeddings |
 | `/v1/models` | GET | List available models |
 | `/health` | GET | Health check |
-| `/stats` | GET | Usage statistics |
+| `/ready` | GET | Readiness check |
+| `/stats` | GET | Usage statistics (JSON) |
+
+### 📊 Statistics & Management
+
+```bash
+# View service info and connection
+proxy-ctl info
+
+# View service status
+proxy-ctl status
+
+# View real-time logs
+proxy-ctl logs
+
+# Enable/disable auto-start
+proxy-ctl enable
+proxy-ctl disable
+
+# View usage statistics via API
+curl http://127.0.0.1:8787/stats
+```
+
+### 🔧 Environment Variables
+
+You can also configure via environment variables:
+
+| Variable | Description |
+|----------|-------------|
+| `PROVIDER` | Provider identifier |
+| `API_KEY` | Coding Plan API Key |
+| `LOCAL_API_KEY` | Local API Key for authentication |
+| `HOST` | Listen host |
+| `PORT` | Listen port |
+| `DEBUG` | Enable debug mode (true/false) |
+| `API_BASE_URL` | Custom API base URL |
+| `API_CODING_URL` | Custom coding endpoint URL |
 
 ### ⚠️ Risk Warning
 
@@ -247,9 +282,11 @@ This project is provided for **educational and research purposes only**.
 | 🎭 **工具伪装** | 伪装为 OpenCode、OpenClaw 或自定义工具 |
 | 🔌 **通用兼容** | 兼容任何支持 OpenAI API 的客户端 |
 | 🌐 **多供应商** | 支持 6+ 主流大模型供应商 |
-| 📊 **用量统计** | 实时追踪 Token 消耗 |
+| 📊 **用量统计** | 实时追踪 Token 消耗，SQLite 持久化存储 |
 | 🔒 **本地认证** | 用自定义密钥保护你的代理 |
 | ⚡ **高性能** | Go 语言构建，极致效率 |
+| 🔧 **灵活配置** | 支持 TOML 配置文件、环境变量和自定义 API URL |
+| 📈 **速率限制** | 内置速率限制防止滥用 |
 
 ### 🚀 快速开始
 
@@ -271,15 +308,23 @@ sudo make install
 [server]
 listen_host = "127.0.0.1"
 listen_port = 8787
+timeout = 120                       # 请求超时(秒)
+rate_limit_requests = 100           # 每5分钟请求限制
 
 [auth]
-provider = "zhipu"                    # 你的 Coding Plan 供应商
+provider = "zhipu"                  # 你的 Coding Plan 供应商
 api_key = "your-coding-plan-api-key"  # 你的 Coding Plan API Key
-local_api_key = "sk-local-secret"     # 你的工具使用的密钥
+local_api_key = "sk-local-secret"   # 你的工具使用的密钥
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"            # 伪装为 OpenCode
+disguise_tool = "opencode"          # 伪装为 OpenCode
+# custom_user_agent = ""            # 自定义 User-Agent（当 disguise_tool = "custom" 时）
+
+[api]
+# 可选：自定义 API URL
+base_url = ""                       # 自定义基础 URL
+coding_url = ""                     # 自定义 Coding 端点 URL
 ```
 
 #### 3. 启动
@@ -303,11 +348,12 @@ proxy-ctl start
 | 供应商 | 标识符 | 支持模型 |
 |--------|--------|----------|
 | **智谱 GLM** | `zhipu` | glm-4-flash, glm-4-plus, glm-4-air, glm-4-long |
-| **智谱 GLM v2** | `zhipu_v2` | glm-4-flash, glm-4-plus, glm-4.7, glm-5 |
-| **阿里云百炼** | `aliyun` | qwen-turbo, qwen-plus, qwen-max, qwen2.5-coder |
-| **MiniMax** | `minimax` | abab6.5s-chat, abab6.5g-chat |
+| **智谱 GLM v2** | `zhipu_v2` | glm-4-flash, glm-4-plus, glm-4-air, glm-4-long, glm-4.7, glm-5 |
+| **阿里云百炼** | `aliyun` | qwen-turbo, qwen-plus, qwen-max, qwen2.5-coder-32b-instruct |
+| **MiniMax** | `minimax` | abab6.5s-chat, abab6.5g-chat, abab6.5-chat |
 | **DeepSeek** | `deepseek` | deepseek-chat, deepseek-coder |
 | **Moonshot (Kimi)** | `moonshot` | moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k |
+| **自定义** | `custom` | 使用 `[api]` 配置段自定义 URL |
 
 ### 🎭 工具伪装选项
 
@@ -320,28 +366,83 @@ disguise_tool = "opencode"   # OpenCode（默认）
 # custom_user_agent = "YourCustomTool/1.0"
 ```
 
-### 📊 统计功能
-
-```bash
-# 查看用量统计
-coding-plan-proxy stats
-
-# 查看连接信息
-coding-plan-proxy show
-
-# JSON 格式（便于脚本使用）
-coding-plan-proxy show --json
-```
-
 ### 📡 API 端点
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
+| `/` | GET | 服务信息 |
 | `/v1/chat/completions` | POST | 聊天补全（支持流式） |
 | `/v1/embeddings` | POST | 文本向量嵌入 |
 | `/v1/models` | GET | 可用模型列表 |
 | `/health` | GET | 健康检查 |
-| `/stats` | GET | 使用统计 |
+| `/ready` | GET | 就绪检查 |
+| `/stats` | GET | 使用统计（JSON） |
+
+### 📊 统计与管理
+
+```bash
+# 查看服务信息和连接配置
+proxy-ctl info
+
+# 查看服务状态
+proxy-ctl status
+
+# 查看实时日志
+proxy-ctl logs
+
+# 开启/关闭开机自启
+proxy-ctl enable
+proxy-ctl disable
+
+# 通过 API 查看使用统计
+curl http://127.0.0.1:8787/stats
+```
+
+### 🔧 环境变量配置
+
+你也可以通过环境变量进行配置：
+
+| 变量 | 说明 |
+|------|------|
+| `PROVIDER` | 供应商标识符 |
+| `API_KEY` | Coding Plan API Key |
+| `LOCAL_API_KEY` | 本地认证 API Key |
+| `HOST` | 监听地址 |
+| `PORT` | 监听端口 |
+| `DEBUG` | 启用调试模式 (true/false) |
+| `API_BASE_URL` | 自定义 API 基础 URL |
+| `API_CODING_URL` | 自定义 Coding 端点 URL |
+
+### 📦 项目结构
+
+```
+coding-plan-proxy-go/
+├── cmd/
+│   └── coding-plan-proxy/       # 主程序入口
+│       └── main.go
+├── internal/
+│   ├── cmd/                     # 命令行工具
+│   │   └── stats/               # 统计命令
+│   ├── config/                  # 配置管理
+│   │   └── config.go
+│   ├── proxy/                   # 代理核心逻辑
+│   │   └── proxy.go
+│   ├── server/                  # HTTP 服务器
+│   │   └── server.go
+│   ├── storage/                 # 数据存储（SQLite）
+│   │   └── storage.go
+│   └── ratelimit/               # 速率限制
+│       └── ratelimit.go
+├── deploy/                      # 部署相关
+│   ├── config.example.toml      # 配置示例
+│   ├── config.example.json      # JSON 配置示例
+│   ├── proxy-ctl.sh             # 控制脚本
+│   └── coding-plan-proxy.service # systemd 服务文件
+├── Makefile                     # 构建脚本
+├── go.mod                       # Go 模块定义
+├── go.sum                       # 依赖校验
+└── README.md                    # 项目文档
+```
 
 ### ⚠️ 风险预警
 
@@ -375,6 +476,43 @@ coding-plan-proxy show --json
 - [智谱 AI 开放文档 - Coding Plan FAQ](https://docs.bigmodel.cn/cn/coding-plan/faq)
 - [阿里云百炼 - Coding Plan 接入工具](https://help.aliyun.com/zh/model-studio/other-tools-coding-plan)
 - [Coding Plan 能当 API 用吗？各家限制一览](https://help.apiyi.com/coding-plan-api-restrictions-openai-codex-exception.html)
+
+---
+
+## 🛠️ Development
+
+### Build from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/systemime/coding-plan-proxy-go.git
+cd coding-plan-proxy-go
+
+# Install dependencies
+make deps
+
+# Build
+make build
+
+# Build for specific platform
+make build-linux    # Linux amd64
+make build-arm64    # Linux arm64
+
+# Run tests
+make test
+
+# Run locally
+make run
+```
+
+### Tech Stack
+
+- **Language**: Go 1.21+
+- **HTTP Server**: net/http
+- **Configuration**: TOML (github.com/BurntSushi/toml)
+- **Logging**: Zap (go.uber.org/zap)
+- **Storage**: SQLite3 (github.com/mattn/go-sqlite3)
+- **Rate Limiting**: golang.org/x/time/rate
 
 ---
 
