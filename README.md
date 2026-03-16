@@ -198,16 +198,6 @@ disguise_tool = "opencode"  # Options: opencode, openclaw, custom
 custom_user_agent = ""      # Used when disguise_tool = "custom"
 ```
 
-### 📈 Performance Comparison
-
-| Metric | Python Version | Go Version |
-|--------|----------------|------------|
-| Memory Usage | ~50-100MB | ~10-20MB |
-| Startup Time | Seconds | Milliseconds |
-| Concurrent Requests | Limited | Unlimited |
-| Connection Pooling | Per-request | Persistent |
-| Deployment | Virtual Env | Single Binary |
-
 ### 🔐 Security Best Practices
 
 1. **Always set `local_api_key`** to prevent unauthorized access
@@ -242,6 +232,32 @@ coding-plan-proxy-go/
 ├── Makefile
 └── README.md
 ```
+
+### ⚠️ Risk Warning
+
+> **IMPORTANT: Please read carefully before using this project**
+
+This project is provided for **educational and research purposes only**. Users should be aware of the following risks:
+
+| Risk Category | Description |
+|---------------|-------------|
+| 🔴 **Terms of Service** | Using this proxy may violate the Terms of Service of certain LLM providers. Users are responsible for understanding and complying with provider policies. |
+| 🔴 **Account Suspension** | Improper use may result in API key revocation or account suspension by providers. |
+| 🟡 **No Warranty** | This software is provided "as-is" without any warranty. The authors are not liable for any damages. |
+| 🟡 **Security Risks** | Exposing the proxy to public networks without proper authentication may lead to unauthorized access. |
+| 🟢 **Self-Responsibility** | Users assume full responsibility for compliance with applicable laws and regulations. |
+
+**By using this software, you agree to:**
+- Use it at your own risk
+- Comply with all applicable laws and provider terms
+- Not use it for any illegal or unauthorized purposes
+- Accept full responsibility for any consequences
+
+**Recommendations:**
+1. Only use with APIs you have legitimate access to
+2. Always set `local_api_key` to prevent unauthorized access
+3. Bind to `127.0.0.1` unless you fully understand the security implications
+4. Review and comply with your provider's Terms of Service
 
 ---
 
@@ -448,16 +464,6 @@ custom_user_agent = ""      # 当 disguise_tool = "custom" 时使用
 - **openclaw**: 伪装为 OpenClaw AI 编程工具
 - **custom**: 使用自定义 User-Agent
 
-### 📈 性能对比
-
-| 指标 | Python 版本 | Go 版本 |
-|------|-------------|---------|
-| 内存占用 | ~50-100MB | ~10-20MB |
-| 启动速度 | 秒级 | 毫秒级 |
-| 并发请求 | 有限 | 无限制 |
-| 连接复用 | 每请求新建 | 连接池持久化 |
-| 部署方式 | 虚拟环境 | 单一二进制文件 |
-
 ### 🔐 安全最佳实践
 
 1. **始终设置 `local_api_key`** 防止未授权访问
@@ -515,11 +521,33 @@ coding-plan-proxy-go/
 └── README.md
 ```
 
+### ⚠️ 风险预警
+
+> **重要提示：使用前请仔细阅读**
+
+本项目仅供**学习和研究目的**。用户应当了解以下风险：
+
+| 风险类别 | 说明 |
+|----------|------|
+| 🔴 **服务条款** | 使用此代理可能违反某些大模型供应商的服务条款。用户有责任了解并遵守供应商的政策。 |
+| 🔴 **账户风险** | 不当使用可能导致 API 密钥被吊销或账户被供应商暂停。 |
+| 🟡 **无担保** | 本软件按"现状"提供，不提供任何担保。作者不对任何损害承担责任。 |
+| 🟡 **安全风险** | 在没有适当认证的情况下将代理暴露到公共网络可能导致未授权访问。 |
+| 🟢 **自负责任** | 用户需对遵守适用法律法规承担全部责任。 |
+
+**使用本软件即表示您同意：**
+- 自行承担使用风险
+- 遵守所有适用法律和供应商条款
+- 不将其用于任何非法或未授权的目的
+- 对任何后果承担全部责任
+
+**建议：**
+1. 仅在您拥有合法访问权限的 API 上使用
+2. 始终设置 `local_api_key` 以防止未授权访问
+3. 除非您完全了解安全影响，否则绑定到 `127.0.0.1`
+4. 审查并遵守您供应商的服务条款
+
 ### 🤝 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-### 📄 许可证
 
 [MIT License](LICENSE)
 
