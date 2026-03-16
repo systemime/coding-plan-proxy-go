@@ -11,9 +11,9 @@ import (
 	"strings"
 	"time"
 
-	"coding-plan-proxy/internal/config"
-	"coding-plan-proxy/internal/ratelimit"
-	"coding-plan-proxy/internal/storage"
+	"coding-plan-mask/internal/config"
+	"coding-plan-mask/internal/ratelimit"
+	"coding-plan-mask/internal/storage"
 
 	"go.uber.org/zap"
 )

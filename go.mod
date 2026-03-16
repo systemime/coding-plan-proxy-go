@@ -1,4 +1,4 @@
-module coding-plan-proxy
+module coding-plan-mask
 
 go 1.21
 

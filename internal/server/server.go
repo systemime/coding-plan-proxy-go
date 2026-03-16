@@ -11,9 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"coding-plan-proxy/internal/config"
-	"coding-plan-proxy/internal/proxy"
-	"coding-plan-proxy/internal/storage"
+	"coding-plan-mask/internal/config"
+	"coding-plan-mask/internal/proxy"
+	"coding-plan-mask/internal/storage"
 
 	"go.uber.org/zap"
 )

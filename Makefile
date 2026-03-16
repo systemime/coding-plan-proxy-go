@@ -1,11 +1,11 @@
-# Coding Plan Proxy Makefile
+# Coding Plan Mask Makefile
 
 # 变量
-APP_NAME := coding-plan-proxy
-VERSION := 0.2.0
+APP_NAME := coding-plan-mask
+VERSION := 0.3.0
 BUILD_DIR := build
 BIN_DIR := $(BUILD_DIR)/bin
-CMD_DIR := cmd/coding-plan-proxy
+CMD_DIR := cmd/coding-plan-mask
 INSTALL_DIR := /opt/project/$(APP_NAME)
 CONFIG_DIR := /opt/project/$(APP_NAME)/config
 
@@ -61,23 +61,23 @@ install: build
 	@mkdir -p $(CONFIG_DIR)
 	@mkdir -p /var/log/$(APP_NAME)
 	@cp $(BIN_DIR)/$(APP_NAME) $(INSTALL_DIR)/bin/
-	@cp deploy/proxy-ctl.sh $(INSTALL_DIR)/deploy/
-	@chmod +x $(INSTALL_DIR)/deploy/proxy-ctl.sh
+	@cp deploy/mask-ctl.sh $(INSTALL_DIR)/deploy/
+	@chmod +x $(INSTALL_DIR)/deploy/mask-ctl.sh
 	@if [ ! -f $(CONFIG_DIR)/config.toml ]; then \
 		cp deploy/config.example.toml $(CONFIG_DIR)/config.toml; \
 		echo "已创建默认配置文件: $(CONFIG_DIR)/config.toml"; \
 	fi
 	@cp deploy/$(APP_NAME).service /etc/systemd/system/
-	@ln -sf $(INSTALL_DIR)/deploy/proxy-ctl.sh /usr/local/bin/proxy-ctl
+	@ln -sf $(INSTALL_DIR)/deploy/mask-ctl.sh /usr/local/bin/mask-ctl
 	@systemctl daemon-reload
 	@echo "安装完成"
 	@echo ""
 	@echo "使用方法:"
 	@echo "  编辑配置: vim $(CONFIG_DIR)/config.toml"
-	@echo "  启动服务: proxy-ctl start 或 systemctl start $(APP_NAME)"
-	@echo "  查看连接: proxy-ctl info"
-	@echo "  开机自启: proxy-ctl enable"
-	@echo "  查看日志: proxy-ctl logs"
+	@echo "  启动服务: mask-ctl start 或 systemctl start $(APP_NAME)"
+	@echo "  查看连接: mask-ctl info"
+	@echo "  开机自启: mask-ctl enable"
+	@echo "  查看日志: mask-ctl logs"
 
 ## uninstall: 从系统卸载
 uninstall:
@@ -85,7 +85,7 @@ uninstall:
 	@systemctl stop $(APP_NAME) 2>/dev/null || true
 	@systemctl disable $(APP_NAME) 2>/dev/null || true
 	@rm -f /etc/systemd/system/$(APP_NAME).service
-	@rm -f /usr/local/bin/proxy-ctl
+	@rm -f /usr/local/bin/mask-ctl
 	@systemctl daemon-reload
 	@rm -rf $(INSTALL_DIR)
 	@rm -rf /var/log/$(APP_NAME)
@@ -122,7 +122,7 @@ tidy:
 
 ## help: 显示帮助信息
 help:
-	@echo "Coding Plan Proxy v$(VERSION)"
+	@echo "Coding Plan Mask v$(VERSION)"
 	@echo ""
 	@echo "使用方法:"
 	@sed -n 's/^##//p' $(MAKEFILE_LIST) | column -t -s ':' | sed -e 's/^/ /'

@@ -9,9 +9,9 @@ import (
 	"syscall"
 	"time"
 
-	"coding-plan-proxy/internal/config"
-	"coding-plan-proxy/internal/server"
-	"coding-plan-proxy/internal/storage"
+	"coding-plan-mask/internal/config"
+	"coding-plan-mask/internal/server"
+	"coding-plan-mask/internal/storage"
 
 	"github.com/BurntSushi/toml"
 	"go.uber.org/zap"
@@ -36,7 +36,7 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("Coding Plan Proxy %s (commit: %s, built: %s)\n", version, commit, date)
+		fmt.Printf("Coding Plan Mask %s (commit: %s, built: %s)\n", version, commit, date)
 		os.Exit(0)
 	}
 
@@ -57,7 +57,7 @@ func main() {
 	globalLogger = logger
 
 	// 初始化存储
-	dataDir := "/opt/project/coding-plan-proxy/data"
+	dataDir := "/opt/project/coding-plan-mask/data"
 	store, err := storage.New(dataDir)
 	if err != nil {
 		logger.Fatal("初始化存储失败", zap.Error(err))

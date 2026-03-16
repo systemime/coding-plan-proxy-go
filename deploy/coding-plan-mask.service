@@ -1,6 +1,6 @@
 [Unit]
-Description=Coding Plan Proxy - 本地代理转发工具
-Documentation=https://github.com/example/coding-plan-proxy
+Description=Coding Plan Mask - 本地代理转发工具
+Documentation=https://github.com/systemime/coding-plan-mask
 After=network.target network-online.target
 Wants=network-online.target
 
@@ -8,8 +8,8 @@ Wants=network-online.target
 Type=simple
 User=root
 Group=root
-WorkingDirectory=/opt/project/coding-plan-proxy
-ExecStart=/opt/project/coding-plan-proxy/bin/coding-plan-proxy -config /opt/project/coding-plan-proxy/config/config.toml
+WorkingDirectory=/opt/project/coding-plan-mask
+ExecStart=/opt/project/coding-plan-mask/bin/coding-plan-mask -config /opt/project/coding-plan-mask/config/config.toml
 ExecReload=/bin/kill -HUP $MAINPID
 Restart=on-failure
 RestartSec=5s
@@ -26,13 +26,13 @@ NoNewPrivileges=yes
 PrivateTmp=yes
 ProtectSystem=strict
 ProtectHome=yes
-ReadWritePaths=/opt/project/coding-plan-proxy
+ReadWritePaths=/opt/project/coding-plan-mask
 ReadOnlyPaths=/etc
 
 # 标准输出和错误
 StandardOutput=journal
 StandardError=journal
-SyslogIdentifier=coding-plan-proxy
+SyslogIdentifier=coding-plan-mask
 
 # 优雅关闭
 TimeoutStopSec=30s

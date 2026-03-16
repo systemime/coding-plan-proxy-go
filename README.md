@@ -1,12 +1,12 @@
 <div align="center">
 
-# 🚀 Coding Plan Proxy
+# 🎭 Coding Plan Mask
 
 **Unlock Your Coding Plan API Key for Any AI Coding Tool**
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-green.svg)](https://github.com/systemime/coding-plan-proxy-go)
+[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -50,14 +50,14 @@ Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.)
 | DeepSeek | Subscription | DeepSeek V3 | ❌ No |
 | Moonshot | Subscription | Kimi | ❌ No |
 
-### 💡 The Solution: Coding Plan Proxy
+### 💡 The Solution: Coding Plan Mask
 
-**Coding Plan Proxy** acts as a bridge between your Coding Plan API and any OpenAI-compatible tool. It disguises your requests to appear as if they come from officially supported IDE tools.
+**Coding Plan Mask** acts as a bridge between your Coding Plan API and any OpenAI-compatible tool. It **masks** your requests to appear as if they come from officially supported IDE tools.
 
 ```
 ┌────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│  Your Favorite AI  │────▶│  Coding Plan Proxy   │────▶│   LLM Provider      │
-│  Tool (Any!)       │◀────│  (Tool Disguise)     │◀────│   (Thinks it's OK)  │
+│  Your Favorite AI  │────▶│   Coding Plan Mask   │────▶│   LLM Provider      │
+│  Tool (Any!)       │◀────│   (Tool Masking)     │◀────│   (Thinks it's OK)  │
 └────────────────────┘     └──────────────────────┘     └─────────────────────┘
 ```
 
@@ -65,7 +65,8 @@ Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.)
 
 | Feature | Description |
 |---------|-------------|
-| 🎭 **Tool Disguise** | Appear as OpenCode, OpenClaw, or custom tool |
+| 🎭 **Tool Masking** | Mask as OpenCode, OpenClaw, or custom tool |
+| 🔀 **Request Relay** | Relay requests to Coding Plan API endpoints |
 | 🔌 **Universal Compatibility** | Works with ANY OpenAI-compatible client |
 | 🌐 **Multi-Provider** | Support for 6+ major LLM providers |
 | 📊 **Usage Analytics** | Track token consumption in real-time with SQLite storage |
@@ -80,15 +81,15 @@ Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.)
 
 ```bash
 # Download from releases or build from source
-git clone https://github.com/systemime/coding-plan-proxy-go.git
-cd coding-plan-proxy-go
+git clone https://github.com/systemime/coding-plan-mask.git
+cd coding-plan-mask
 make build
 sudo make install
 ```
 
 #### 2. Configure
 
-Edit `/opt/project/coding-plan-proxy/config/config.toml`:
+Edit `/opt/project/coding-plan-mask/config/config.toml`:
 
 ```toml
 [server]
@@ -104,7 +105,7 @@ local_api_key = "sk-local-secret"   # Key for your tools to use
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"          # Disguise as OpenCode
+disguise_tool = "opencode"          # Mask as OpenCode
 # custom_user_agent = ""            # Custom User-Agent (when disguise_tool = "custom")
 
 [api]
@@ -116,7 +117,7 @@ coding_url = ""                     # Custom coding endpoint URL
 #### 3. Start
 
 ```bash
-proxy-ctl start
+mask-ctl start
 ```
 
 #### 4. Use with Any Tool
@@ -143,11 +144,11 @@ Configure your AI coding tool to use:
 | **Moonshot** | `moonshot` | moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k |
 | **Custom** | `custom` | Use `[api]` section to configure custom URLs |
 
-### 🎭 Tool Disguise Options
+### 🎭 Tool Masking Options
 
 ```toml
 [endpoint]
-# Disguise as officially supported tools
+# Mask as officially supported tools
 disguise_tool = "opencode"   # OpenCode (default)
 # disguise_tool = "openclaw"  # OpenClaw
 # disguise_tool = "custom"    # Use custom User-Agent
@@ -170,17 +171,17 @@ disguise_tool = "opencode"   # OpenCode (default)
 
 ```bash
 # View service info and connection
-proxy-ctl info
+mask-ctl info
 
 # View service status
-proxy-ctl status
+mask-ctl status
 
 # View real-time logs
-proxy-ctl logs
+mask-ctl logs
 
 # Enable/disable auto-start
-proxy-ctl enable
-proxy-ctl disable
+mask-ctl enable
+mask-ctl disable
 
 # View usage statistics via API
 curl http://127.0.0.1:8787/stats
@@ -264,13 +265,13 @@ This project is provided for **educational and research purposes only**.
 | DeepSeek | 订阅制 | DeepSeek V3 | ❌ 不可以 |
 | Moonshot | 订阅制 | Kimi | ❌ 不可以 |
 
-### 💡 解决方案：Coding Plan Proxy
+### 💡 解决方案：Coding Plan Mask
 
-**Coding Plan Proxy** 作为你的 Coding Plan API 和任意 OpenAI 兼容工具之间的桥梁。它将你的请求伪装成来自官方支持的 IDE 工具。
+**Coding Plan Mask** 作为你的 Coding Plan API 和任意 OpenAI 兼容工具之间的桥梁。它将你的请求**伪装**成来自官方支持的 IDE 工具。
 
 ```
 ┌────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
-│   你喜欢的 AI 工具   │────▶│   Coding Plan Proxy  │────▶│     LLM 供应商      │
+│   你喜欢的 AI 工具   │────▶│   Coding Plan Mask   │────▶│     LLM 供应商      │
 │   （任意！）         │◀────│   （工具伪装）         │◀────│   （以为没问题）     │
 └────────────────────┘     └──────────────────────┘     └─────────────────────┘
 ```
@@ -280,6 +281,7 @@ This project is provided for **educational and research purposes only**.
 | 功能 | 说明 |
 |------|------|
 | 🎭 **工具伪装** | 伪装为 OpenCode、OpenClaw 或自定义工具 |
+| 🔀 **请求中转** | 将请求中转到 Coding Plan API 端点 |
 | 🔌 **通用兼容** | 兼容任何支持 OpenAI API 的客户端 |
 | 🌐 **多供应商** | 支持 6+ 主流大模型供应商 |
 | 📊 **用量统计** | 实时追踪 Token 消耗，SQLite 持久化存储 |
@@ -294,15 +296,15 @@ This project is provided for **educational and research purposes only**.
 
 ```bash
 # 从 Release 下载或从源码编译
-git clone https://github.com/systemime/coding-plan-proxy-go.git
-cd coding-plan-proxy-go
+git clone https://github.com/systemime/coding-plan-mask.git
+cd coding-plan-mask
 make build
 sudo make install
 ```
 
 #### 2. 配置
 
-编辑 `/opt/project/coding-plan-proxy/config/config.toml`：
+编辑 `/opt/project/coding-plan-mask/config/config.toml`：
 
 ```toml
 [server]
@@ -330,7 +332,7 @@ coding_url = ""                     # 自定义 Coding 端点 URL
 #### 3. 启动
 
 ```bash
-proxy-ctl start
+mask-ctl start
 ```
 
 #### 4. 配置你的 AI 工具
@@ -382,17 +384,17 @@ disguise_tool = "opencode"   # OpenCode（默认）
 
 ```bash
 # 查看服务信息和连接配置
-proxy-ctl info
+mask-ctl info
 
 # 查看服务状态
-proxy-ctl status
+mask-ctl status
 
 # 查看实时日志
-proxy-ctl logs
+mask-ctl logs
 
 # 开启/关闭开机自启
-proxy-ctl enable
-proxy-ctl disable
+mask-ctl enable
+mask-ctl disable
 
 # 通过 API 查看使用统计
 curl http://127.0.0.1:8787/stats
@@ -416,9 +418,9 @@ curl http://127.0.0.1:8787/stats
 ### 📦 项目结构
 
 ```
-coding-plan-proxy-go/
+coding-plan-mask/
 ├── cmd/
-│   └── coding-plan-proxy/       # 主程序入口
+│   └── coding-plan-mask/       # 主程序入口
 │       └── main.go
 ├── internal/
 │   ├── cmd/                     # 命令行工具
@@ -436,8 +438,8 @@ coding-plan-proxy-go/
 ├── deploy/                      # 部署相关
 │   ├── config.example.toml      # 配置示例
 │   ├── config.example.json      # JSON 配置示例
-│   ├── proxy-ctl.sh             # 控制脚本
-│   └── coding-plan-proxy.service # systemd 服务文件
+│   ├── mask-ctl.sh              # 控制脚本
+│   └── coding-plan-mask.service # systemd 服务文件
 ├── Makefile                     # 构建脚本
 ├── go.mod                       # Go 模块定义
 ├── go.sum                       # 依赖校验
@@ -485,8 +487,8 @@ coding-plan-proxy-go/
 
 ```bash
 # Clone the repository
-git clone https://github.com/systemime/coding-plan-proxy-go.git
-cd coding-plan-proxy-go
+git clone https://github.com/systemime/coding-plan-mask.git
+cd coding-plan-mask
 
 # Install dependencies
 make deps

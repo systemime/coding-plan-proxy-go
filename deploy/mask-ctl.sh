@@ -1,9 +1,9 @@
 #!/bin/bash
-# Coding Plan Proxy 控制脚本
+# Coding Plan Mask 控制脚本
 
 set -e
 
-APP_NAME="coding-plan-proxy"
+APP_NAME="coding-plan-mask"
 INSTALL_DIR="/opt/project/${APP_NAME}"
 CONFIG_DIR="${INSTALL_DIR}/config"
 CONFIG_FILE="${CONFIG_DIR}/config.toml"
@@ -285,7 +285,7 @@ edit() {
 }
 
 usage() {
-    echo "Coding Plan Proxy 控制脚本
+    echo "Coding Plan Mask 控制脚本
 
 用法: $0 <命令> [参数]
 

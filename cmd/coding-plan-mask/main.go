@@ -1,4 +1,4 @@
-// Coding Plan Proxy - 本地代理转发工具
+// Coding Plan Mask - 本地代理转发工具
 // 将请求转发到云厂商 Coding Plan API
 package main
 
@@ -10,16 +10,16 @@ import (
 	"path/filepath"
 	"strings"
 
-	"coding-plan-proxy/internal/config"
-	"coding-plan-proxy/internal/server"
-	"coding-plan-proxy/internal/storage"
+	"coding-plan-mask/internal/config"
+	"coding-plan-mask/internal/server"
+	"coding-plan-mask/internal/storage"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 )
 
 var (
-	version = "0.2.0"
+	version = "0.3.0"
 	commit  = "unknown"
 	date    = "unknown"
 )
@@ -53,7 +53,7 @@ func main() {
 	flag.Parse()
 
 	if *showVersion {
-		fmt.Printf("Coding Plan Proxy %s (commit: %s, built: %s)\n", version, commit, date)
+		fmt.Printf("Coding Plan Mask %s (commit: %s, built: %s)\n", version, commit, date)
 		os.Exit(0)
 	}
 
@@ -130,13 +130,13 @@ func showStats(args []string) {
 		dataDir = filepath.Join(filepath.Dir(*configPath), "data")
 	} else {
 		// 尝试从 systemd 服务获取配置路径
-		serviceConfig := "/opt/project/coding-plan-proxy/config/config.toml"
+		serviceConfig := "/opt/project/coding-plan-mask/config/config.toml"
 		if _, err := os.Stat(serviceConfig); err == nil {
 			dataDir = filepath.Join(filepath.Dir(serviceConfig), "data")
 		} else {
 			// 默认路径
 			homeDir, _ := os.UserHomeDir()
-			dataDir = filepath.Join(homeDir, ".config", "coding-plan-proxy", "data")
+			dataDir = filepath.Join(homeDir, ".config", "coding-plan-mask", "data")
 		}
 	}
 	dbPath := filepath.Join(dataDir, "proxy.db")
@@ -234,7 +234,7 @@ func showConnection(args []string) {
 
 // printHelp 打印帮助信息
 func printHelp() {
-	fmt.Printf(`Coding Plan Proxy v%s - 本地代理转发工具
+	fmt.Printf(`Coding Plan Mask v%s - 本地代理转发工具
 
 用法:
   %s [选项]           启动代理服务
@@ -337,7 +337,7 @@ func printBanner(cfg *config.Config, logger *zap.Logger) {
 
 	banner := fmt.Sprintf(`
 ╔══════════════════════════════════════════════════════════════╗
-║                Coding Plan Proxy v%s                      ║
+║                Coding Plan Mask v%s                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  服务商: %-50s ║
 ║  端点类型: %-48s ║

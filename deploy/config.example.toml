@@ -1,5 +1,5 @@
-# Coding Plan Proxy 配置文件
-# 文档: https://github.com/example/coding-plan-proxy
+# Coding Plan Mask 配置文件
+# 文档: https://github.com/systemime/coding-plan-mask
 
 # ============================================================================
 # 服务器配置
@@ -36,7 +36,9 @@ local_api_key = "sk-local-your-secret-key"
 [endpoint]
 # 是否使用 Coding Plan 端点
 use_coding_endpoint = true
-# 自定义 User-Agent (留空使用默认)
+# 伪装工具: opencode, openclaw, custom
+disguise_tool = "opencode"
+# 自定义 User-Agent (留空使用默认，仅当 disguise_tool = "custom" 时生效)
 custom_user_agent = ""
 
 # ============================================================================
