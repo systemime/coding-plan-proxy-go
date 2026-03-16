@@ -2,13 +2,13 @@
 
 # 🚀 Coding Plan Proxy
 
-**Lightning-Fast AI Gateway for Coding Assistants**
+**Unlock Your Coding Plan API Key for Any AI Coding Tool**
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](CONTRIBUTING.md)
 
-*Transform any OpenAI-compatible client into a powerful coding assistant with enterprise-grade features*
+*Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
 [English](#-english-documentation) | [中文文档](#-中文文档)
 
@@ -18,53 +18,73 @@
 
 ## 📖 English Documentation
 
-### What is Coding Plan Proxy?
+### 😤 The Problem: Coding Plan Restrictions
 
-**Coding Plan Proxy** is a high-performance, production-ready proxy server that bridges your favorite AI coding tools with multiple LLM providers through the **Coding Plan API**. Built in Go for maximum efficiency, it offers enterprise features like rate limiting, usage analytics, and seamless OpenAI API compatibility.
+Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.) offer **Coding Plan** subscriptions at attractive prices, but with **severe usage restrictions**:
 
-### ✨ Why Choose Coding Plan Proxy?
+| What You Pay For | What You Actually Get |
+|------------------|----------------------|
+| ✅ Fixed monthly fee, unlimited coding | ❌ **Only works with specific IDE tools** |
+| ✅ Access to powerful models | ❌ **Cannot use in your favorite tools** |
+| ✅ Official API Key provided | ❌ **Cannot use for automation/backend** |
 
-| Feature | Benefit |
-|---------|---------|
-| ⚡ **Blazing Fast** | Sub-millisecond latency with Go's native concurrency |
-| 🔌 **Drop-in Compatible** | Works with any OpenAI-compatible client instantly |
-| 🎭 **Smart Disguise** | Appear as popular coding tools (OpenCode, OpenClaw) |
-| 📊 **Rich Analytics** | Real-time token usage tracking and visualization |
-| 🔒 **Enterprise Security** | Rate limiting, request validation, and audit logging |
-| 🌐 **Multi-Provider** | Support for 6+ major LLM providers out of the box |
+#### 🔒 Official Restrictions
 
-### 🏗️ Architecture
+| Allowed | Forbidden |
+|---------|-----------|
+| ✅ Claude Code, Cursor, Cline | ❌ Your own AI tools |
+| ✅ VS Code extensions | ❌ Custom scripts |
+| ✅ Interactive coding | ❌ Automated workflows |
+| | ❌ Backend integration |
+| | ❌ Dify, FastGPT platforms |
+
+**Violation Consequence**: Subscription suspension or API Key ban
+
+#### 📊 Provider Comparison
+
+| Provider | Monthly Fee | Models | Can Use in Custom Tools? |
+|----------|-------------|--------|-------------------------|
+| Zhipu GLM | $3-15+ | GLM-4.7, GLM-5 | ❌ No |
+| Alibaba Cloud | $5.80-29 | Qwen, GLM, MiniMax, Kimi | ❌ No |
+| MiniMax | Subscription | M2.1 (not M2.5!) | ❌ No |
+| DeepSeek | Subscription | DeepSeek V3 | ❌ No |
+| Moonshot | Subscription | Kimi | ❌ No |
+
+### 💡 The Solution: Coding Plan Proxy
+
+**Coding Plan Proxy** acts as a bridge between your Coding Plan API and any OpenAI-compatible tool. It disguises your requests to appear as if they come from officially supported IDE tools.
 
 ```
-┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│  Your AI Client │────▶│  Coding Plan Proxy   │────▶│   LLM Provider  │
-│  (OpenAI SDK)   │◀────│  (OpenAI Compatible) │◀────│   (Zhipu, etc)  │
-└─────────────────┘     └──────────────────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌──────────────┐
-                        │   SQLite DB  │
-                        │  (Analytics) │
-                        └──────────────┘
+┌────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│  Your Favorite AI  │────▶│  Coding Plan Proxy   │────▶│   LLM Provider      │
+│  Tool (Any!)       │◀────│  (Tool Disguise)     │◀────│   (Thinks it's OK)  │
+└────────────────────┘     └──────────────────────┘     └─────────────────────┘
 ```
+
+### ✨ Key Features
+
+| Feature | Description |
+|---------|-------------|
+| 🎭 **Tool Disguise** | Appear as OpenCode, OpenClaw, or custom tool |
+| 🔌 **Universal Compatibility** | Works with ANY OpenAI-compatible client |
+| 🌐 **Multi-Provider** | Support for 6+ major LLM providers |
+| 📊 **Usage Analytics** | Track token consumption in real-time |
+| 🔒 **Local Auth** | Protect your proxy with custom API key |
+| ⚡ **High Performance** | Built in Go for maximum efficiency |
 
 ### 🚀 Quick Start
 
-#### Installation
+#### 1. Install
 
 ```bash
-# Clone the repository
+# Download from releases or build from source
 git clone https://github.com/systemime/coding-plan-proxy-go.git
 cd coding-plan-proxy-go
-
-# Build
 make build
-
-# Install to system (requires root)
 sudo make install
 ```
 
-#### Configuration
+#### 2. Configure
 
 Edit `/opt/project/coding-plan-proxy/config/config.toml`:
 
@@ -74,37 +94,32 @@ listen_host = "127.0.0.1"
 listen_port = 8787
 
 [auth]
-provider = "zhipu"                    # zhipu, aliyun, minimax, deepseek, moonshot
+provider = "zhipu"                    # Your Coding Plan provider
 api_key = "your-coding-plan-api-key"  # Your Coding Plan API Key
-local_api_key = "sk-local-secret"     # Client authentication key
+local_api_key = "sk-local-secret"     # Key for your tools to use
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"            # opencode, openclaw, or custom
+disguise_tool = "opencode"            # Disguise as OpenCode
 ```
 
-#### Start the Service
+#### 3. Start
 
 ```bash
-# Using the control script
 proxy-ctl start
-
-# Or using systemctl
-sudo systemctl start coding-plan-proxy
-sudo systemctl enable coding-plan-proxy  # Auto-start on boot
 ```
 
-### 📡 API Endpoints
+#### 4. Use with Any Tool
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/` | GET | Service information & stats |
-| `/v1/models` | GET | List available models |
-| `/v1/chat/completions` | POST | Chat completions (streaming supported) |
-| `/v1/embeddings` | POST | Text embeddings |
-| `/health` | GET | Health check |
-| `/ready` | GET | Readiness check |
-| `/stats` | GET | Usage statistics |
+Configure your AI coding tool to use:
+
+```json
+{
+    "base_url": "http://127.0.0.1:8787/v1",
+    "api_key": "sk-local-secret",
+    "model": "glm-4-flash"
+}
+```
 
 ### 🤖 Supported Providers
 
@@ -117,250 +132,171 @@ sudo systemctl enable coding-plan-proxy  # Auto-start on boot
 | **DeepSeek** | `deepseek` | deepseek-chat, deepseek-coder |
 | **Moonshot** | `moonshot` | moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k |
 
-### 💻 Client Configuration
-
-**For OpenAI SDK:**
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://127.0.0.1:8787/v1",
-    api_key="sk-local-secret"
-)
-
-response = client.chat.completions.create(
-    model="glm-4-flash",
-    messages=[{"role": "user", "content": "Hello!"}],
-    stream=True
-)
-```
-
-**For cURL:**
-
-```bash
-curl http://127.0.0.1:8787/v1/chat/completions \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-local-secret" \
-    -d '{
-        "model": "glm-4-flash",
-        "messages": [{"role": "user", "content": "Hello!"}],
-        "stream": true
-    }'
-```
-
-### 📊 Real-time Monitoring
-
-```bash
-# View statistics
-coding-plan-proxy stats
-
-# Real-time monitoring with ASCII charts
-coding-plan-proxy monitor
-
-# View connection info
-coding-plan-proxy show
-```
-
-Output example:
-```
-╔════════════════════════════════════════════════════════════╗
-║                    Token Usage Statistics                   ║
-╠════════════════════════════════════════════════════════════╣
-║  Total Requests:    1,234                                  ║
-║  Total Input:       156,789 tokens                         ║
-║  Total Output:      89,012 tokens                          ║
-║  Today Requests:    56                                     ║
-╚════════════════════════════════════════════════════════════╝
-```
-
-### 🛠️ Control Script Commands
-
-```bash
-proxy-ctl start        # Start service
-proxy-ctl stop         # Stop service
-proxy-ctl restart      # Restart service
-proxy-ctl status       # View status
-proxy-ctl logs         # View logs (real-time)
-proxy-ctl info         # Show connection info
-proxy-ctl test         # Test API connection
-proxy-ctl config       # View/modify configuration
-proxy-ctl edit         # Edit config file
-```
-
-### 🎭 Tool Disguise Feature
-
-The proxy can disguise itself as popular coding tools:
+### 🎭 Tool Disguise Options
 
 ```toml
 [endpoint]
-disguise_tool = "opencode"  # Options: opencode, openclaw, custom
-custom_user_agent = ""      # Used when disguise_tool = "custom"
+# Disguise as officially supported tools
+disguise_tool = "opencode"   # OpenCode (default)
+# disguise_tool = "openclaw"  # OpenClaw
+# disguise_tool = "custom"    # Use custom User-Agent
+# custom_user_agent = "YourCustomTool/1.0"
 ```
 
-### 🔐 Security Best Practices
+### 📊 Statistics
 
-1. **Always set `local_api_key`** to prevent unauthorized access
-2. **Bind to `127.0.0.1`** unless external access is required
-3. **Configure rate limiting** to prevent abuse
-4. **Review logs regularly** via `journalctl -u coding-plan-proxy`
-5. **Keep updated** with the latest release
+```bash
+# View usage statistics
+coding-plan-proxy stats
 
-### 📁 Project Structure
+# View connection info
+coding-plan-proxy show
 
+# JSON format for scripting
+coding-plan-proxy show --json
 ```
-coding-plan-proxy-go/
-├── cmd/
-│   └── coding-plan-proxy/
-│       └── main.go           # Entry point
-├── internal/
-│   ├── config/
-│   │   └── config.go         # Configuration management
-│   ├── proxy/
-│   │   └── proxy.go          # Proxy logic
-│   ├── ratelimit/
-│   │   └── ratelimit.go      # Rate limiting
-│   ├── server/
-│   │   └── server.go         # HTTP server
-│   └── storage/
-│       └── storage.go        # SQLite storage
-├── deploy/
-│   ├── coding-plan-proxy.service  # systemd unit
-│   ├── config.example.toml        # Example config
-│   └── proxy-ctl.sh               # Control script
-├── go.mod
-├── Makefile
-└── README.md
-```
+
+### 📡 API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/v1/chat/completions` | POST | Chat completions (streaming supported) |
+| `/v1/embeddings` | POST | Text embeddings |
+| `/v1/models` | GET | List available models |
+| `/health` | GET | Health check |
+| `/stats` | GET | Usage statistics |
 
 ### ⚠️ Risk Warning
 
 > **IMPORTANT: Please read carefully before using this project**
 
-This project is provided for **educational and research purposes only**. Users should be aware of the following risks:
+This project is provided for **educational and research purposes only**.
 
-| Risk Category | Description |
-|---------------|-------------|
-| 🔴 **Terms of Service** | Using this proxy may violate the Terms of Service of certain LLM providers. Users are responsible for understanding and complying with provider policies. |
-| 🔴 **Account Suspension** | Improper use may result in API key revocation or account suspension by providers. |
-| 🟡 **No Warranty** | This software is provided "as-is" without any warranty. The authors are not liable for any damages. |
-| 🟡 **Security Risks** | Exposing the proxy to public networks without proper authentication may lead to unauthorized access. |
-| 🟢 **Self-Responsibility** | Users assume full responsibility for compliance with applicable laws and regulations. |
+| Risk | Description |
+|------|-------------|
+| 🔴 **Terms of Service** | May violate your provider's Terms of Service |
+| 🔴 **Account Risk** | Improper use may result in API key revocation or account suspension |
+| 🟡 **No Warranty** | Software provided "as-is" without any warranty |
+| 🟡 **Security** | Exposing proxy to public networks may lead to unauthorized access |
+| 🟢 **Self-Responsibility** | Users assume full responsibility for compliance |
 
 **By using this software, you agree to:**
 - Use it at your own risk
 - Comply with all applicable laws and provider terms
-- Not use it for any illegal or unauthorized purposes
 - Accept full responsibility for any consequences
 
 **Recommendations:**
 1. Only use with APIs you have legitimate access to
 2. Always set `local_api_key` to prevent unauthorized access
-3. Bind to `127.0.0.1` unless you fully understand the security implications
-4. Review and comply with your provider's Terms of Service
+3. Bind to `127.0.0.1` unless you fully understand security implications
+4. Review your provider's Terms of Service
 
 ---
 
 ## 📖 中文文档
 
-### 什么是 Coding Plan Proxy？
+### 😤 问题背景：Coding Plan 的使用限制
 
-**Coding Plan Proxy** 是一个高性能、生产就绪的代理服务器，通过 **Coding Plan API** 将您喜爱的 AI 编程工具与多个大语言模型提供商连接起来。采用 Go 语言构建以实现最高效率，提供速率限制、使用分析、OpenAI API 无缝兼容等企业级功能。
+各大 AI 服务商（智谱 GLM、阿里云百炼、MiniMax、DeepSeek、Moonshot 等）推出的 **Coding Plan（编码套餐）** 虽然价格诱人，但有**严格的使用限制**：
 
-### ✨ 核心优势
+| 你以为买到的 | 实际上只能 |
+|-------------|-----------|
+| ✅ 固定月费，无限编码 | ❌ **只能在指定的 IDE 工具中使用** |
+| ✅ 访问强大的模型 | ❌ **不能在你喜欢的工具里用** |
+| ✅ 获得官方 API Key | ❌ **不能用于自动化/后端** |
 
-| 特性 | 优势 |
+#### 🔒 官方限制条款
+
+以阿里云百炼为例，Coding Plan 明确规定：
+
+| 允许的使用方式 | 禁止的使用方式 |
+|---------------|---------------|
+| ✅ Claude Code、Cursor、Cline | ❌ 你自己的 AI 工具 |
+| ✅ VS Code 插件 | ❌ 自定义脚本 |
+| ✅ 人工交互编码 | ❌ 自动化工作流 |
+| | ❌ 后端服务调用 |
+| | ❌ Dify、FastGPT 等平台 |
+
+**违规后果**：订阅暂停或 API Key 封禁
+
+#### 📊 各厂商限制对比
+
+| 服务商 | 月费 | 模型 | 可用于自定义工具？ |
+|--------|------|------|-------------------|
+| 智谱 GLM | ¥20-100+ | GLM-4.7, GLM-5 | ❌ 不可以 |
+| 阿里云百炼 | ¥40-200 | 通义、GLM、MiniMax、Kimi | ❌ 不可以 |
+| MiniMax | 订阅制 | M2.1（非 M2.5！） | ❌ 不可以 |
+| DeepSeek | 订阅制 | DeepSeek V3 | ❌ 不可以 |
+| Moonshot | 订阅制 | Kimi | ❌ 不可以 |
+
+### 💡 解决方案：Coding Plan Proxy
+
+**Coding Plan Proxy** 作为你的 Coding Plan API 和任意 OpenAI 兼容工具之间的桥梁。它将你的请求伪装成来自官方支持的 IDE 工具。
+
+```
+┌────────────────────┐     ┌──────────────────────┐     ┌─────────────────────┐
+│   你喜欢的 AI 工具   │────▶│   Coding Plan Proxy  │────▶│     LLM 供应商      │
+│   （任意！）         │◀────│   （工具伪装）         │◀────│   （以为没问题）     │
+└────────────────────┘     └──────────────────────┘     └─────────────────────┘
+```
+
+### ✨ 核心功能
+
+| 功能 | 说明 |
 |------|------|
-| ⚡ **极致性能** | Go 原生并发，亚毫秒级延迟 |
-| 🔌 **即插即用** | 与任何 OpenAI 兼容客户端无缝对接 |
-| 🎭 **智能伪装** | 伪装为热门编程工具 (OpenCode, OpenClaw) |
-| 📊 **丰富统计** | 实时 Token 使用追踪和可视化 |
-| 🔒 **企业安全** | 速率限制、请求验证、审计日志 |
-| 🌐 **多供应商** | 开箱即用支持 6+ 主流大模型供应商 |
-
-### 🏗️ 工作原理
-
-```
-┌─────────────────┐     ┌──────────────────────┐     ┌─────────────────┐
-│   您的 AI 客户端 │────▶│   Coding Plan Proxy  │────▶│    大模型供应商  │
-│  (OpenAI SDK)   │◀────│   (OpenAI 兼容接口)   │◀────│  (智谱, 阿里等)  │
-└─────────────────┘     └──────────────────────┘     └─────────────────┘
-                               │
-                               ▼
-                        ┌──────────────┐
-                        │   SQLite 数据库  │
-                        │   (统计分析)    │
-                        └──────────────┘
-```
-
-**工作流程：**
-1. 客户端发送 OpenAI 格式的请求到本地代理
-2. 代理验证身份并应用速率限制
-3. 请求被转换为 Coding Plan API 格式
-4. 添加伪装工具的 User-Agent 标识
-5. 转发到对应的大模型供应商
-6. 响应流式返回给客户端，同时记录统计数据
+| 🎭 **工具伪装** | 伪装为 OpenCode、OpenClaw 或自定义工具 |
+| 🔌 **通用兼容** | 兼容任何支持 OpenAI API 的客户端 |
+| 🌐 **多供应商** | 支持 6+ 主流大模型供应商 |
+| 📊 **用量统计** | 实时追踪 Token 消耗 |
+| 🔒 **本地认证** | 用自定义密钥保护你的代理 |
+| ⚡ **高性能** | Go 语言构建，极致效率 |
 
 ### 🚀 快速开始
 
-#### 安装
+#### 1. 安装
 
 ```bash
-# 克隆仓库
+# 从 Release 下载或从源码编译
 git clone https://github.com/systemime/coding-plan-proxy-go.git
 cd coding-plan-proxy-go
-
-# 编译
 make build
-
-# 安装到系统 (需要 root 权限)
 sudo make install
 ```
 
-#### 配置
+#### 2. 配置
 
-编辑 `/opt/project/coding-plan-proxy/config/config.toml`:
+编辑 `/opt/project/coding-plan-proxy/config/config.toml`：
 
 ```toml
 [server]
-listen_host = "127.0.0.1"    # 监听地址
-listen_port = 8787           # 监听端口
-timeout = 120                # 请求超时(秒)
-rate_limit_requests = 100    # 速率限制(每5分钟)
-debug = false                # 调试模式
+listen_host = "127.0.0.1"
+listen_port = 8787
 
 [auth]
-provider = "zhipu"                    # 服务商
-api_key = "your-coding-plan-api-key"  # Coding Plan API Key
-local_api_key = "sk-local-secret"     # 本地认证密钥
+provider = "zhipu"                    # 你的 Coding Plan 供应商
+api_key = "your-coding-plan-api-key"  # 你的 Coding Plan API Key
+local_api_key = "sk-local-secret"     # 你的工具使用的密钥
 
 [endpoint]
-use_coding_endpoint = true   # 使用 Coding Plan 端点
-disguise_tool = "opencode"   # 伪装工具: opencode, openclaw, custom
+use_coding_endpoint = true
+disguise_tool = "opencode"            # 伪装为 OpenCode
 ```
 
-#### 启动服务
+#### 3. 启动
 
 ```bash
-# 使用控制脚本
 proxy-ctl start
-
-# 或使用 systemctl
-sudo systemctl start coding-plan-proxy
-sudo systemctl enable coding-plan-proxy  # 开机自启
 ```
 
-### 📡 API 端点
+#### 4. 配置你的 AI 工具
 
-| 端点 | 方法 | 说明 |
-|------|------|------|
-| `/` | GET | 服务信息和统计数据 |
-| `/v1/models` | GET | 可用模型列表 |
-| `/v1/chat/completions` | POST | 聊天补全 (支持流式) |
-| `/v1/embeddings` | POST | 文本向量嵌入 |
-| `/health` | GET | 健康检查 |
-| `/ready` | GET | 就绪检查 |
-| `/stats` | GET | 使用统计 |
+```json
+{
+    "base_url": "http://127.0.0.1:8787/v1",
+    "api_key": "sk-local-secret",
+    "model": "glm-4-flash"
+}
+```
 
 ### 🤖 支持的供应商
 
@@ -373,189 +309,78 @@ sudo systemctl enable coding-plan-proxy  # 开机自启
 | **DeepSeek** | `deepseek` | deepseek-chat, deepseek-coder |
 | **Moonshot (Kimi)** | `moonshot` | moonshot-v1-8k, moonshot-v1-32k, moonshot-v1-128k |
 
-### 💻 客户端配置
-
-**Python (OpenAI SDK):**
-
-```python
-from openai import OpenAI
-
-client = OpenAI(
-    base_url="http://127.0.0.1:8787/v1",
-    api_key="sk-local-secret"
-)
-
-response = client.chat.completions.create(
-    model="glm-4-flash",
-    messages=[{"role": "user", "content": "你好！"}],
-    stream=True
-)
-
-for chunk in response:
-    print(chunk.choices[0].delta.content, end="")
-```
-
-**cURL:**
-
-```bash
-curl http://127.0.0.1:8787/v1/chat/completions \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer sk-local-secret" \
-    -d '{
-        "model": "glm-4-flash",
-        "messages": [{"role": "user", "content": "你好！"}],
-        "stream": true
-    }'
-```
-
-### 📊 实时监控
-
-```bash
-# 查看统计信息
-coding-plan-proxy stats
-
-# 实时监控 (带 ASCII 图表)
-coding-plan-proxy monitor
-
-# 查看连接信息
-coding-plan-proxy show
-```
-
-输出示例：
-```
-╔════════════════════════════════════════════════════════════╗
-║                    Token 使用统计                           ║
-╠════════════════════════════════════════════════════════════╣
-║  总请求数:     1,234                                        ║
-║  总上传 Token: 156,789                                      ║
-║  总下载 Token: 89,012                                       ║
-║  今日请求:     56                                           ║
-╚════════════════════════════════════════════════════════════╝
-```
-
-### 🛠️ 控制脚本命令
-
-```bash
-proxy-ctl start        # 启动服务
-proxy-ctl stop         # 停止服务
-proxy-ctl restart      # 重启服务
-proxy-ctl status       # 查看状态
-proxy-ctl logs         # 查看日志 (实时)
-proxy-ctl info         # 显示连接信息
-proxy-ctl test         # 测试 API 连接
-proxy-ctl config       # 查看/修改配置
-proxy-ctl edit         # 编辑配置文件
-proxy-ctl enable       # 开机自启
-proxy-ctl disable      # 取消开机自启
-```
-
-### 🎭 工具伪装功能
-
-代理可以伪装为热门编程工具，让请求看起来像是来自这些工具：
+### 🎭 工具伪装选项
 
 ```toml
 [endpoint]
-disguise_tool = "opencode"  # 选项: opencode, openclaw, custom
-custom_user_agent = ""      # 当 disguise_tool = "custom" 时使用
+# 伪装为官方支持的工具
+disguise_tool = "opencode"   # OpenCode（默认）
+# disguise_tool = "openclaw"  # OpenClaw
+# disguise_tool = "custom"    # 使用自定义 User-Agent
+# custom_user_agent = "YourCustomTool/1.0"
 ```
 
-支持的伪装工具：
-- **opencode**: 伪装为 OpenCode 编程助手
-- **openclaw**: 伪装为 OpenClaw AI 编程工具
-- **custom**: 使用自定义 User-Agent
-
-### 🔐 安全最佳实践
-
-1. **始终设置 `local_api_key`** 防止未授权访问
-2. **绑定到 `127.0.0.1`** 除非需要外部访问
-3. **配置速率限制** 防止滥用
-4. **定期检查日志** `journalctl -u coding-plan-proxy`
-5. **保持更新** 使用最新版本
-
-### 🔧 高级配置
-
-#### 自定义 API 端点
-
-```toml
-[api]
-base_url = "https://your-custom-api.com/v1"
-coding_url = "https://your-custom-api.com/coding/v1"
-auth_header = "Authorization"
-auth_prefix = "Bearer "
-```
-
-#### 环境变量支持
+### 📊 统计功能
 
 ```bash
-export PROVIDER=zhipu
-export API_KEY=your-api-key
-export LOCAL_API_KEY=sk-local-secret
-export HOST=127.0.0.1
-export PORT=8787
+# 查看用量统计
+coding-plan-proxy stats
+
+# 查看连接信息
+coding-plan-proxy show
+
+# JSON 格式（便于脚本使用）
+coding-plan-proxy show --json
 ```
 
-### 📁 项目结构
+### 📡 API 端点
 
-```
-coding-plan-proxy-go/
-├── cmd/
-│   └── coding-plan-proxy/
-│       └── main.go           # 主程序入口
-├── internal/
-│   ├── config/
-│   │   └── config.go         # 配置管理
-│   ├── proxy/
-│   │   └── proxy.go          # 代理转发逻辑
-│   ├── ratelimit/
-│   │   └── ratelimit.go      # 速率限制
-│   ├── server/
-│   │   └── server.go         # HTTP 服务器
-│   └── storage/
-│       └── storage.go        # SQLite 数据存储
-├── deploy/
-│   ├── coding-plan-proxy.service  # systemd 服务文件
-│   ├── config.example.toml        # 配置示例
-│   └── proxy-ctl.sh               # 控制脚本
-├── go.mod
-├── Makefile
-└── README.md
-```
+| 端点 | 方法 | 说明 |
+|------|------|------|
+| `/v1/chat/completions` | POST | 聊天补全（支持流式） |
+| `/v1/embeddings` | POST | 文本向量嵌入 |
+| `/v1/models` | GET | 可用模型列表 |
+| `/health` | GET | 健康检查 |
+| `/stats` | GET | 使用统计 |
 
 ### ⚠️ 风险预警
 
 > **重要提示：使用前请仔细阅读**
 
-本项目仅供**学习和研究目的**。用户应当了解以下风险：
+本项目仅供**学习和研究目的**。
 
-| 风险类别 | 说明 |
-|----------|------|
-| 🔴 **服务条款** | 使用此代理可能违反某些大模型供应商的服务条款。用户有责任了解并遵守供应商的政策。 |
-| 🔴 **账户风险** | 不当使用可能导致 API 密钥被吊销或账户被供应商暂停。 |
-| 🟡 **无担保** | 本软件按"现状"提供，不提供任何担保。作者不对任何损害承担责任。 |
-| 🟡 **安全风险** | 在没有适当认证的情况下将代理暴露到公共网络可能导致未授权访问。 |
-| 🟢 **自负责任** | 用户需对遵守适用法律法规承担全部责任。 |
+| 风险 | 说明 |
+|------|------|
+| 🔴 **服务条款** | 可能违反你供应商的服务条款 |
+| 🔴 **账户风险** | 不当使用可能导致 API 密钥被吊销或账户被暂停 |
+| 🟡 **无担保** | 软件按"现状"提供，不提供任何担保 |
+| 🟡 **安全风险** | 将代理暴露到公共网络可能导致未授权访问 |
+| 🟢 **自负责任** | 用户需对遵守适用法律法规承担全部责任 |
 
 **使用本软件即表示您同意：**
 - 自行承担使用风险
 - 遵守所有适用法律和供应商条款
-- 不将其用于任何非法或未授权的目的
 - 对任何后果承担全部责任
 
 **建议：**
 1. 仅在您拥有合法访问权限的 API 上使用
 2. 始终设置 `local_api_key` 以防止未授权访问
 3. 除非您完全了解安全影响，否则绑定到 `127.0.0.1`
-4. 审查并遵守您供应商的服务条款
+4. 审查您供应商的服务条款
 
-### 🤝 贡献
+---
 
-[MIT License](LICENSE)
+## 📚 参考资料 / References
+
+- [智谱 AI 开放文档 - Coding Plan FAQ](https://docs.bigmodel.cn/cn/coding-plan/faq)
+- [阿里云百炼 - Coding Plan 接入工具](https://help.aliyun.com/zh/model-studio/other-tools-coding-plan)
+- [Coding Plan 能当 API 用吗？各家限制一览](https://help.apiyi.com/coding-plan-api-restrictions-openai-codex-exception.html)
 
 ---
 
 <div align="center">
 
-**⭐ If you find this project helpful, please give it a star! ⭐**
+**⭐ If this project helps you, please give it a star! ⭐**
 
 Made with ❤️ by the community
 
