@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	version = "0.3.0"
+	version = "0.4.0"
 	commit  = "unknown"
 	date    = "unknown"
 )
@@ -258,9 +258,13 @@ func printHelp() {
   -version               显示版本信息
 
 伪装工具配置 (在 config.toml 中设置):
-  disguise_tool = "opencode"   伪装为 OpenCode (默认)
-  disguise_tool = "openclaw"   伪装为 OpenClaw
-  disguise_tool = "custom"     使用自定义 User-Agent
+  disguise_tool = "claudecode"  伪装为 Claude Code (推荐)
+  disguise_tool = "cursor"      伪装为 Cursor IDE
+  disguise_tool = "cline"       伪装为 Cline
+  disguise_tool = "opencode"    伪装为 OpenCode
+  disguise_tool = "openclaw"    伪装为 OpenClaw
+  disguise_tool = "copilot"     伪装为 GitHub Copilot
+  disguise_tool = "custom"      使用自定义 User-Agent
 
 示例:
   # 启动服务
@@ -326,7 +330,7 @@ func printBanner(cfg *config.Config, logger *zap.Logger) {
 	// 获取伪装工具信息
 	disguiseTool := cfg.DisguiseTool
 	if disguiseTool == "" {
-		disguiseTool = "opencode"
+		disguiseTool = "claudecode"
 	}
 	toolInfo, ok := config.PredefinedDisguiseTools[disguiseTool]
 	toolName := "未知"

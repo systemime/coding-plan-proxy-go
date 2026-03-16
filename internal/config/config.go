@@ -103,15 +103,35 @@ type DisguiseToolConfig struct {
 
 // PredefinedDisguiseTools 预定义的伪装工具
 var PredefinedDisguiseTools = map[string]DisguiseToolConfig{
+	"claudecode": {
+		Name:      "Claude Code",
+		UserAgent: "claude-code/2.0.64",
+		ExtraInfo: "Anthropic 官方终端编程助手",
+	},
+	"cursor": {
+		Name:      "Cursor",
+		UserAgent: "cursor/0.45.0",
+		ExtraInfo: "AI 代码编辑器",
+	},
+	"cline": {
+		Name:      "Cline",
+		UserAgent: "cline/3.0.0",
+		ExtraInfo: "VS Code AI 编程助手",
+	},
 	"opencode": {
 		Name:      "OpenCode",
 		UserAgent: "opencode/0.3.0 (linux)",
-		ExtraInfo: "开源编程助手",
+		ExtraInfo: "开源编程助手 (已归档)",
 	},
 	"openclaw": {
 		Name:      "OpenClaw",
 		UserAgent: "OpenClaw-Gateway/1.0",
 		ExtraInfo: "AI 编程工具",
+	},
+	"copilot": {
+		Name:      "GitHub Copilot",
+		UserAgent: "GithubCopilot/1.0",
+		ExtraInfo: "GitHub AI 编程助手",
 	},
 	"custom": {
 		Name:      "自定义",
@@ -193,7 +213,7 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.CustomUserAgent = cfgFile.Endpoint.CustomUserAgent
 	cfg.DisguiseTool = cfgFile.Endpoint.DisguiseTool
 	if cfg.DisguiseTool == "" {
-		cfg.DisguiseTool = "opencode" // 默认使用 opencode
+		cfg.DisguiseTool = "claudecode" // 默认使用 claudecode
 	}
 
 	// 自定义 API 配置
@@ -324,8 +344,8 @@ func (c *Config) GetEffectiveUserAgent() string {
 		return tool.UserAgent
 	}
 
-	// 默认使用 opencode
-	return PredefinedDisguiseTools["opencode"].UserAgent
+	// 默认使用 claudecode
+	return PredefinedDisguiseTools["claudecode"].UserAgent
 }
 
 // GetProviderConfigByName 根据名称获取服务商配置

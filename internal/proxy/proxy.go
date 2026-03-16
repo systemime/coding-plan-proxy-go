@@ -290,7 +290,6 @@ func (p *Proxy) buildHeaders(provider *config.ProviderConfig, apiKey string) map
 		"Content-Type":      "application/json",
 		provider.AuthHeader: provider.AuthPrefix + apiKey,
 		"User-Agent":        userAgent,
-		"X-Client-Type":     "coding-tool",
 		"Accept":            "text/event-stream",
 	}
 

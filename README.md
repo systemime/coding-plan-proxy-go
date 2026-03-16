@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.0-green.svg)](https://github.com/systemime/coding-plan-mask)
+[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -105,7 +105,7 @@ local_api_key = "sk-local-secret"   # Key for your tools to use
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"          # Mask as OpenCode
+disguise_tool = "claudecode"        # Mask as Claude Code (recommended)
 # custom_user_agent = ""            # Custom User-Agent (when disguise_tool = "custom")
 
 [api]
@@ -149,11 +149,25 @@ Configure your AI coding tool to use:
 ```toml
 [endpoint]
 # Mask as officially supported tools
-disguise_tool = "opencode"   # OpenCode (default)
-# disguise_tool = "openclaw"  # OpenClaw
-# disguise_tool = "custom"    # Use custom User-Agent
+disguise_tool = "claudecode"  # Claude Code (recommended)
+# disguise_tool = "cursor"     # Cursor IDE
+# disguise_tool = "cline"      # Cline (VS Code extension)
+# disguise_tool = "opencode"   # OpenCode (archived)
+# disguise_tool = "openclaw"   # OpenClaw
+# disguise_tool = "copilot"    # GitHub Copilot
+# disguise_tool = "custom"     # Use custom User-Agent
 # custom_user_agent = "YourCustomTool/1.0"
 ```
+
+| Tool | Identifier | User-Agent | Description |
+|------|------------|------------|-------------|
+| **Claude Code** | `claudecode` | `claude-code/2.0.64` | Anthropic 官方终端编程助手 (推荐) |
+| **Cursor** | `cursor` | `cursor/0.45.0` | AI 代码编辑器 |
+| **Cline** | `cline` | `cline/3.0.0` | VS Code AI 编程助手 |
+| **OpenCode** | `opencode` | `opencode/0.3.0 (linux)` | 开源编程助手 (已归档) |
+| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | AI 编程工具 |
+| **GitHub Copilot** | `copilot` | `GithubCopilot/1.0` | GitHub AI 编程助手 |
+| **Custom** | `custom` | (自定义) | 使用 `custom_user_agent` 配置 |
 
 ### 📡 API Endpoints
 
@@ -320,7 +334,7 @@ local_api_key = "sk-local-secret"   # 你的工具使用的密钥
 
 [endpoint]
 use_coding_endpoint = true
-disguise_tool = "opencode"          # 伪装为 OpenCode
+disguise_tool = "claudecode"        # 伪装为 Claude Code (推荐)
 # custom_user_agent = ""            # 自定义 User-Agent（当 disguise_tool = "custom" 时）
 
 [api]
@@ -362,11 +376,25 @@ mask-ctl start
 ```toml
 [endpoint]
 # 伪装为官方支持的工具
-disguise_tool = "opencode"   # OpenCode（默认）
-# disguise_tool = "openclaw"  # OpenClaw
-# disguise_tool = "custom"    # 使用自定义 User-Agent
+disguise_tool = "claudecode"  # Claude Code（推荐）
+# disguise_tool = "cursor"     # Cursor IDE
+# disguise_tool = "cline"      # Cline (VS Code 插件)
+# disguise_tool = "opencode"   # OpenCode (已归档)
+# disguise_tool = "openclaw"   # OpenClaw
+# disguise_tool = "copilot"    # GitHub Copilot
+# disguise_tool = "custom"     # 使用自定义 User-Agent
 # custom_user_agent = "YourCustomTool/1.0"
 ```
+
+| 工具 | 标识符 | User-Agent | 说明 |
+|------|--------|------------|------|
+| **Claude Code** | `claudecode` | `claude-code/2.0.64` | Anthropic 官方终端编程助手 (推荐) |
+| **Cursor** | `cursor` | `cursor/0.45.0` | AI 代码编辑器 |
+| **Cline** | `cline` | `cline/3.0.0` | VS Code AI 编程助手 |
+| **OpenCode** | `opencode` | `opencode/0.3.0 (linux)` | 开源编程助手 (已归档) |
+| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | AI 编程工具 |
+| **GitHub Copilot** | `copilot` | `GithubCopilot/1.0` | GitHub AI 编程助手 |
+| **自定义** | `custom` | (自定义) | 使用 `custom_user_agent` 配置 |
 
 ### 📡 API 端点
 
