@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.0-green.svg)](https://github.com/systemime/coding-plan-mask)
+[![Version](https://img.shields.io/badge/version-0.4.1-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -149,25 +149,21 @@ Configure your AI coding tool to use:
 ```toml
 [endpoint]
 # Mask as officially supported tools
-disguise_tool = "claudecode"  # Claude Code (recommended)
-# disguise_tool = "cursor"     # Cursor IDE
-# disguise_tool = "cline"      # Cline (VS Code extension)
-# disguise_tool = "opencode"   # OpenCode (archived)
-# disguise_tool = "openclaw"   # OpenClaw
-# disguise_tool = "copilot"    # GitHub Copilot
+disguise_tool = "claudecode"  # Claude Code (recommended, compatible with Zhipu/Kimi)
+# disguise_tool = "kimicode"    # Kimi Code API subscription auth format
+# disguise_tool = "openclaw"    # OpenClaw
 # disguise_tool = "custom"     # Use custom User-Agent
 # custom_user_agent = "YourCustomTool/1.0"
 ```
 
 | Tool | Identifier | User-Agent | Description |
 |------|------------|------------|-------------|
-| **Claude Code** | `claudecode` | `claude-code/2.0.64` | Anthropic 官方终端编程助手 (推荐) |
-| **Cursor** | `cursor` | `cursor/0.45.0` | AI 代码编辑器 |
-| **Cline** | `cline` | `cline/3.0.0` | VS Code AI 编程助手 |
-| **OpenCode** | `opencode` | `opencode/0.3.0 (linux)` | 开源编程助手 (已归档) |
-| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | AI 编程工具 |
-| **GitHub Copilot** | `copilot` | `GithubCopilot/1.0` | GitHub AI 编程助手 |
-| **Custom** | `custom` | (自定义) | 使用 `custom_user_agent` 配置 |
+| **Claude Code** | `claudecode` | `claude-code/2.1.63` | Anthropic official terminal coding assistant (recommended) |
+| **Kimi Code** | `kimicode` | `claude-code/0.1.0` | Kimi Code API subscription auth format |
+| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | Open-source AI coding tool |
+| **Custom** | `custom` | (custom) | Use `custom_user_agent` config |
+
+> **Note**: User-Agent values are sourced from official documentation and GitHub issues. See [References](#-参考资料--references) for sources.
 
 ### 📡 API Endpoints
 
@@ -294,7 +290,7 @@ This project is provided for **educational and research purposes only**.
 
 | 功能 | 说明 |
 |------|------|
-| 🎭 **工具伪装** | 伪装为 OpenCode、OpenClaw 或自定义工具 |
+| 🎭 **工具伪装** | 伪装为 Claude Code、Kimi Code、OpenClaw 或自定义工具 |
 | 🔀 **请求中转** | 将请求中转到 Coding Plan API 端点 |
 | 🔌 **通用兼容** | 兼容任何支持 OpenAI API 的客户端 |
 | 🌐 **多供应商** | 支持 6+ 主流大模型供应商 |
@@ -376,25 +372,21 @@ mask-ctl start
 ```toml
 [endpoint]
 # 伪装为官方支持的工具
-disguise_tool = "claudecode"  # Claude Code（推荐）
-# disguise_tool = "cursor"     # Cursor IDE
-# disguise_tool = "cline"      # Cline (VS Code 插件)
-# disguise_tool = "opencode"   # OpenCode (已归档)
-# disguise_tool = "openclaw"   # OpenClaw
-# disguise_tool = "copilot"    # GitHub Copilot
+disguise_tool = "claudecode"  # Claude Code（推荐，兼容智谱/Kimi）
+# disguise_tool = "kimicode"    # Kimi Code API 订阅认证格式
+# disguise_tool = "openclaw"    # OpenClaw
 # disguise_tool = "custom"     # 使用自定义 User-Agent
 # custom_user_agent = "YourCustomTool/1.0"
 ```
 
 | 工具 | 标识符 | User-Agent | 说明 |
 |------|--------|------------|------|
-| **Claude Code** | `claudecode` | `claude-code/2.0.64` | Anthropic 官方终端编程助手 (推荐) |
-| **Cursor** | `cursor` | `cursor/0.45.0` | AI 代码编辑器 |
-| **Cline** | `cline` | `cline/3.0.0` | VS Code AI 编程助手 |
-| **OpenCode** | `opencode` | `opencode/0.3.0 (linux)` | 开源编程助手 (已归档) |
-| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | AI 编程工具 |
-| **GitHub Copilot** | `copilot` | `GithubCopilot/1.0` | GitHub AI 编程助手 |
+| **Claude Code** | `claudecode` | `claude-code/2.1.63` | Anthropic 官方终端编程助手 (推荐) |
+| **Kimi Code** | `kimicode` | `claude-code/0.1.0` | Kimi Code API 订阅认证格式 |
+| **OpenClaw** | `openclaw` | `OpenClaw-Gateway/1.0` | 开源 AI 编程工具 |
 | **自定义** | `custom` | (自定义) | 使用 `custom_user_agent` 配置 |
+
+> **注**: User-Agent 值来源于官方文档和 GitHub issues，详见[参考资料](#-参考资料--references)。
 
 ### 📡 API 端点
 
