@@ -2,7 +2,7 @@
 
 # 变量
 APP_NAME := coding-plan-mask
-VERSION := 0.3.0
+VERSION := 0.5.0
 BUILD_DIR := build
 BIN_DIR := $(BUILD_DIR)/bin
 CMD_DIR := cmd/coding-plan-mask

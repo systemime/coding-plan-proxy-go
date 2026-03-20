@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.4.1-green.svg)](https://github.com/systemime/coding-plan-mask)
+[![Version](https://img.shields.io/badge/version-0.5.0-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 

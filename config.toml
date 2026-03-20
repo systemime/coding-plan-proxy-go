@@ -1,0 +1,80 @@
+# Coding Plan Mask 配置文件
+# 文档: https://github.com/systemime/coding-plan-mask
+
+# ============================================================================
+# 服务器配置
+# ============================================================================
+[server]
+# 监听地址
+listen_host = "127.0.0.1"
+# 监听端口
+listen_port = 8787
+# 调试模式
+debug = false
+# 请求超时(秒)
+timeout = 120
+# 速率限制(每5分钟窗口)
+rate_limit_requests = 100
+# 最大请求体大小(字节)
+max_request_body_size = 10485760
+
+# ============================================================================
+# 认证配置
+# ============================================================================
+[auth]
+# 服务商: zhipu, zhipu_v2, aliyun, minimax, deepseek, moonshot, custom
+provider = "zhipu"
+# Coding Plan API Key (用于向云厂商发起请求)
+# 获取方式: https://open.bigmodel.cn/
+api_key = ""
+# 本地 API Key (客户端连接代理时使用，留空则不验证)
+local_api_key = "sk-local-your-secret-key"
+
+# ============================================================================
+# 端点配置
+# ============================================================================
+[endpoint]
+# 是否使用 Coding Plan 端点
+use_coding_endpoint = true
+# 伪装工具: opencode, openclaw, custom
+disguise_tool = "opencode"
+# 自定义 User-Agent (留空使用默认，仅当 disguise_tool = "custom" 时生效)
+custom_user_agent = ""
+
+# ============================================================================
+# API URL 配置 (可选 - 自定义 API 端点)
+# 如果需要使用自定义 API 地址，可以在这里配置
+# ============================================================================
+[api]
+# 自定义 API 基础 URL (留空使用服务商默认地址)
+# 示例: base_url = "https://api.example.com/v1"
+base_url = ""
+# Coding Plan 端点 URL (留空使用服务商默认地址或 base_url)
+# 示例: coding_url = "https://api.example.com/coding/v1"
+coding_url = ""
+# 认证头名称 (留空使用默认 "Authorization")
+auth_header = ""
+# 认证前缀 (留空使用默认 "Bearer ")
+auth_prefix = ""
+
+# ============================================================================
+# 服务商默认 URL 参考
+# ============================================================================
+# zhipu:      https://open.bigmodel.cn/api/coding/paas/v4
+# zhipu_v2:   https://api.z.ai/api/coding/paas/v4
+# aliyun:     https://dashscope.aliyuncs.com/compatible-mode/v1
+# minimax:    https://api.minimax.chat/v1
+# deepseek:   https://api.deepseek.com/v1
+# moonshot:   https://api.moonshot.cn/v1
+
+# ============================================================================
+# 自定义服务商示例 (provider = "custom")
+# ============================================================================
+# [auth]
+# provider = "custom"
+#
+# [api]
+# base_url = "https://your-custom-api.com/v1"
+# coding_url = "https://your-custom-api.com/coding/v1"
+# auth_header = "Authorization"
+# auth_prefix = "Bearer "
