@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.6.1-green.svg)](https://github.com/systemime/coding-plan-mask)
+[![Version](https://img.shields.io/badge/version-0.6.2-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -66,7 +66,7 @@ Major AI providers (Zhipu GLM, Alibaba Cloud, MiniMax, DeepSeek, Moonshot, etc.)
 | Feature | Description |
 |---------|-------------|
 | 🎭 **Tool Masking** | Mask as Claude Code, Kimi Code, OpenClaw or custom tool |
-| 🔀 **Request Relay** | Relay requests to Coding Plan API endpoints |
+| 🔀 **Request Relay** | Transparently forward arbitrary upstream API paths |
 | 🔌 **Universal Compatibility** | Works with ANY OpenAI-compatible client |
 | 🌐 **Multi-Provider** | Support for 6+ major LLM providers |
 | 📊 **Usage Analytics** | Track token consumption in real-time with SQLite storage |
@@ -85,17 +85,17 @@ Download the binary for your platform from [GitHub Releases](https://github.com/
 
 ```bash
 # Linux amd64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-linux-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-linux-amd64
 chmod +x mask-ctl-linux-amd64
 sudo mv mask-ctl-linux-amd64 /usr/local/bin/mask-ctl
 
 # Linux arm64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-linux-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-linux-arm64
 chmod +x mask-ctl-linux-arm64
 sudo mv mask-ctl-linux-arm64 /usr/local/bin/mask-ctl
 
 # macOS (Darwin)
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-darwin-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-darwin-arm64
 chmod +x mask-ctl-darwin-arm64
 sudo mv mask-ctl-darwin-arm64 /usr/local/bin/mask-ctl
 
@@ -206,15 +206,15 @@ disguise_tool = "claudecode"  # Claude Code (recommended, compatible with Zhipu/
 
 ### 📡 API Endpoints
 
+The proxy reserves a small set of local management endpoints and transparently forwards all other request paths to the upstream provider.
+
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/` | GET | Service information |
-| `/v1/chat/completions` | POST | Chat completions (streaming supported) |
-| `/v1/embeddings` | POST | Text embeddings |
-| `/v1/models` | GET | List available models |
 | `/health` | GET | Health check |
 | `/ready` | GET | Readiness check |
 | `/stats` | GET | Usage statistics (JSON) |
+| `/*` | Any | Forward any other path to the upstream API with disguised headers |
 
 ### 📊 Statistics & Management
 
@@ -305,17 +305,17 @@ This project is provided for **educational and research purposes only**.
 
 ```bash
 # Linux amd64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-linux-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-linux-amd64
 chmod +x mask-ctl-linux-amd64
 sudo mv mask-ctl-linux-amd64 /usr/local/bin/mask-ctl
 
 # Linux arm64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-linux-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-linux-arm64
 chmod +x mask-ctl-linux-arm64
 sudo mv mask-ctl-linux-arm64 /usr/local/bin/mask-ctl
 
 # macOS
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.1/mask-ctl-darwin-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.6.2/mask-ctl-darwin-arm64
 chmod +x mask-ctl-darwin-arm64
 sudo mv mask-ctl-darwin-arm64 /usr/local/bin/mask-ctl
 ```
@@ -407,15 +407,15 @@ sudo systemctl start coding-plan-mask
 
 ### 📡 API 端点
 
+代理会保留少量本地管理端点，其余任意请求路径都会透明转发到上游服务商。
+
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/` | GET | 服务信息 |
-| `/v1/chat/completions` | POST | 聊天补全（支持流式） |
-| `/v1/embeddings` | POST | 文本向量嵌入 |
-| `/v1/models` | GET | 可用模型列表 |
 | `/health` | GET | 健康检查 |
 | `/ready` | GET | 就绪检查 |
 | `/stats` | GET | 使用统计（JSON） |
+| `/*` | 任意 | 其余任意路径原样透传到上游 API，并附加伪装请求头 |
 
 ### 📊 统计与管理
 

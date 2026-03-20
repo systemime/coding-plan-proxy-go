@@ -43,18 +43,6 @@ func New(cfg *config.Config, logger *zap.Logger, store *storage.Storage, version
 func (s *Server) SetupRoutes() http.Handler {
 	mux := http.NewServeMux()
 
-	// 根路径 - 服务信息
-	mux.HandleFunc("/", s.handleRoot)
-
-	// 模型列表
-	mux.HandleFunc("/v1/models", s.handleModels)
-
-	// 聊天补全
-	mux.HandleFunc("/v1/chat/completions", s.handleChatCompletions)
-
-	// 向量嵌入
-	mux.HandleFunc("/v1/embeddings", s.handleEmbeddings)
-
 	// 健康检查
 	mux.HandleFunc("/health", s.handleHealth)
 
@@ -63,6 +51,9 @@ func (s *Server) SetupRoutes() http.Handler {
 
 	// 统计信息
 	mux.HandleFunc("/stats", s.handleStats)
+
+	// 其余路径全部透传到上游，仅根路径保留本地信息
+	mux.HandleFunc("/", s.handleProxy)
 
 	// 带日志的中间件
 	handler := s.loggingMiddleware(mux)
@@ -106,63 +97,14 @@ func (s *Server) handleRoot(w http.ResponseWriter, r *http.Request) {
 	s.writeJSON(w, http.StatusOK, resp)
 }
 
-// handleModels 模型列表处理器
-func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		s.writeError(w, http.StatusMethodNotAllowed, "方法不允许")
+// handleProxy 代理所有非保留路径请求
+func (s *Server) handleProxy(w http.ResponseWriter, r *http.Request) {
+	if r.URL.Path == "/" && r.Method == http.MethodGet {
+		s.handleRoot(w, r)
 		return
 	}
 
-	provider, err := s.cfg.GetProviderConfig()
-	if err != nil {
-		s.writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	models := make([]map[string]interface{}, len(provider.Models))
-	for i, modelID := range provider.Models {
-		models[i] = map[string]interface{}{
-			"id":       modelID,
-			"object":   "model",
-			"created":  1700000000,
-			"owned_by": provider.Name,
-		}
-	}
-
-	resp := map[string]interface{}{
-		"object": "list",
-		"data":   models,
-	}
-
-	s.writeJSON(w, http.StatusOK, resp)
-}
-
-// handleChatCompletions 聊天补全处理器
-func (s *Server) handleChatCompletions(w http.ResponseWriter, r *http.Request) {
-	// 支持 OPTIONS 预检请求
-	if r.Method == http.MethodOptions {
-		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization, X-Provider")
-		w.WriteHeader(http.StatusOK)
-		return
-	}
-
-	if r.Method != http.MethodPost {
-		s.writeError(w, http.StatusMethodNotAllowed, "方法不允许")
-		return
-	}
-
-	s.proxy.ChatCompletions(w, r)
-}
-
-// handleEmbeddings 向量嵌入处理器
-func (s *Server) handleEmbeddings(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		s.writeError(w, http.StatusMethodNotAllowed, "方法不允许")
-		return
-	}
-
-	s.proxy.Embeddings(w, r)
+	s.proxy.Forward(w, r)
 }
 
 // handleHealth 健康检查处理器

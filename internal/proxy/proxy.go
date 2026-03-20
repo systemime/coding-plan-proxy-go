@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/textproto"
 	"strings"
 	"time"
 
@@ -60,6 +61,11 @@ func (p *Proxy) Close() error {
 
 // ChatCompletions 聊天补全代理
 func (p *Proxy) ChatCompletions(w http.ResponseWriter, r *http.Request) {
+	p.Forward(w, r)
+}
+
+// Forward 通用透传代理
+func (p *Proxy) Forward(w http.ResponseWriter, r *http.Request) {
 	startTime := time.Now()
 	clientIP := getClientIP(r)
 
@@ -77,15 +83,7 @@ func (p *Proxy) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	// 解析请求以获取模型信息
-	var reqBody map[string]interface{}
-	if err := json.Unmarshal(body, &reqBody); err != nil {
-		p.writeError(w, http.StatusBadRequest, "无效的请求体")
-		return
-	}
-
-	model, _ := reqBody["model"].(string)
-	stream, _ := reqBody["stream"].(bool)
+	_, model, inputTokens := parseRequestMetadata(body)
 
 	// 验证本地 API Key
 	if !p.validateLocalAPIKey(r) {
@@ -112,15 +110,16 @@ func (p *Proxy) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	if !p.cfg.UseCodingEndpoint {
 		baseURL = provider.GeneralBaseURL
 	}
-	targetURL := fmt.Sprintf("%s/chat/completions", baseURL)
+	targetURL := buildTargetURL(baseURL, r)
 
 	// 构建请求头
-	headers := p.buildHeaders(provider, codingAPIKey, stream)
+	headers := p.buildHeaders(provider, codingAPIKey, r.Header)
 
 	// 日志记录
 	p.logger.Info("处理请求",
+		zap.String("method", r.Method),
+		zap.String("path", r.URL.Path),
 		zap.String("model", model),
-		zap.Bool("stream", stream),
 		zap.String("provider", p.cfg.Provider),
 	)
 
@@ -132,8 +131,8 @@ func (p *Proxy) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// 设置请求头
-	for k, v := range headers {
-		upstreamReq.Header.Set(k, v)
+	for k, values := range headers {
+		upstreamReq.Header[k] = append([]string(nil), values...)
 	}
 
 	// 发送请求
@@ -149,116 +148,17 @@ func (p *Proxy) ChatCompletions(w http.ResponseWriter, r *http.Request) {
 	}
 	defer resp.Body.Close()
 
-	// 计算输入 token
-	inputTokens := estimateInputTokens(reqBody)
-
 	// 处理响应
-	if stream && resp.StatusCode == http.StatusOK && isEventStream(resp.Header.Get("Content-Type")) {
-		p.handleStreamResponseWithStats(w, resp, startTime, model, clientIP, inputTokens, string(body))
+	if resp.StatusCode == http.StatusOK && isEventStream(resp.Header.Get("Content-Type")) {
+		p.handleStreamResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, model, clientIP, inputTokens, string(body))
 	} else {
-		p.handleNormalResponseWithStats(w, resp, startTime, model, clientIP, inputTokens, string(body))
+		p.handleNormalResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, model, clientIP, inputTokens, string(body))
 	}
 }
 
 // Embeddings 向量嵌入代理
 func (p *Proxy) Embeddings(w http.ResponseWriter, r *http.Request) {
-	startTime := time.Now()
-	clientIP := getClientIP(r)
-
-	// 速率限制检查
-	if !p.rateLimit.Allow() {
-		p.writeError(w, http.StatusTooManyRequests, "请求过于频繁，请稍后再试")
-		return
-	}
-
-	// 读取请求体
-	body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, p.cfg.MaxRequestBodySize))
-	if err != nil {
-		p.writeError(w, http.StatusBadRequest, "读取请求体失败")
-		return
-	}
-	defer r.Body.Close()
-
-	// 验证本地 API Key
-	if !p.validateLocalAPIKey(r) {
-		p.writeError(w, http.StatusUnauthorized, "API Key 无效")
-		return
-	}
-
-	// 获取 Coding Plan API Key
-	codingAPIKey := p.cfg.APIKey
-	if codingAPIKey == "" {
-		p.writeError(w, http.StatusInternalServerError, "服务未配置 API Key")
-		return
-	}
-
-	// 获取服务商配置
-	provider, err := p.cfg.GetProviderConfig()
-	if err != nil {
-		p.writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-
-	// 构建目标 URL
-	baseURL := provider.CodingBaseURL
-	if !p.cfg.UseCodingEndpoint {
-		baseURL = provider.GeneralBaseURL
-	}
-	targetURL := fmt.Sprintf("%s/embeddings", baseURL)
-
-	// 构建请求头
-	headers := p.buildHeaders(provider, codingAPIKey, false)
-
-	// 创建上游请求
-	upstreamReq, err := http.NewRequestWithContext(r.Context(), "POST", targetURL, bytes.NewReader(body))
-	if err != nil {
-		p.writeError(w, http.StatusInternalServerError, "创建请求失败")
-		return
-	}
-
-	for k, v := range headers {
-		upstreamReq.Header.Set(k, v)
-	}
-
-	// 发送请求
-	resp, err := p.client.Do(upstreamReq)
-	if err != nil {
-		p.writeError(w, http.StatusBadGateway, "上游服务不可用")
-		return
-	}
-	defer resp.Body.Close()
-
-	// 读取响应体用于存储
-	respBody, _ := io.ReadAll(resp.Body)
-
-	// 复制响应
-	for k, v := range resp.Header {
-		w.Header()[k] = v
-	}
-	w.WriteHeader(resp.StatusCode)
-	w.Write(respBody)
-
-	// 保存记录
-	duration := time.Since(startTime).Milliseconds()
-	record := &storage.RequestRecord{
-		Timestamp:    startTime,
-		Provider:     p.cfg.Provider,
-		Model:        "",
-		Stream:       false,
-		Method:       "POST",
-		Path:         "/v1/embeddings",
-		ClientIP:     clientIP,
-		RequestBody:  string(body),
-		ResponseBody: string(respBody),
-		StatusCode:   resp.StatusCode,
-		Duration:     float64(duration),
-		InputTokens:  0,
-		OutputTokens: 0,
-		TotalTokens:  0,
-		Success:      resp.StatusCode == 200,
-	}
-
-	go p.storage.SaveRequest(record)
+	p.Forward(w, r)
 }
 
 // validateLocalAPIKey 验证本地 API Key
@@ -282,31 +182,35 @@ func (p *Proxy) validateLocalAPIKey(r *http.Request) bool {
 }
 
 // buildHeaders 构建请求头
-func (p *Proxy) buildHeaders(provider *config.ProviderConfig, apiKey string, stream bool) map[string]string {
+func (p *Proxy) buildHeaders(provider *config.ProviderConfig, apiKey string, requestHeaders http.Header) http.Header {
 	// 获取有效的 User-Agent（基于伪装工具配置）
 	userAgent := p.cfg.GetEffectiveUserAgent()
-	accept := "application/json"
-	if stream {
-		accept = "text/event-stream"
+
+	headers := make(http.Header, len(requestHeaders)+len(provider.ExtraHeaders)+2)
+	for k, values := range requestHeaders {
+		canonicalKey := textproto.CanonicalMIMEHeaderKey(k)
+		if isHopByHopHeader(canonicalKey) {
+			continue
+		}
+		if canonicalKey == "Authorization" || canonicalKey == textproto.CanonicalMIMEHeaderKey(provider.AuthHeader) {
+			continue
+		}
+		headers[canonicalKey] = append([]string(nil), values...)
 	}
 
-	headers := map[string]string{
-		"Content-Type":      "application/json",
-		provider.AuthHeader: provider.AuthPrefix + apiKey,
-		"User-Agent":        userAgent,
-		"Accept":            accept,
-	}
+	headers.Set(provider.AuthHeader, provider.AuthPrefix+apiKey)
+	headers.Set("User-Agent", userAgent)
 
 	// 添加额外头部
 	for k, v := range provider.ExtraHeaders {
-		headers[k] = v
+		headers.Set(k, v)
 	}
 
 	return headers
 }
 
 // handleStreamResponseWithStats 处理流式响应并统计
-func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, model, clientIP string, inputTokens int, requestBody string) {
+func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, model, clientIP string, inputTokens int, requestBody string) {
 	copyHeaders(w.Header(), resp.Header)
 
 	// 设置 SSE 头
@@ -384,8 +288,8 @@ func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.
 		Provider:     p.cfg.Provider,
 		Model:        model,
 		Stream:       true,
-		Method:       "POST",
-		Path:         "/v1/chat/completions",
+		Method:       method,
+		Path:         path,
 		ClientIP:     clientIP,
 		RequestBody:  requestBody,
 		ResponseBody: responseBuf.String(),
@@ -401,7 +305,7 @@ func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.
 }
 
 // handleNormalResponseWithStats 处理普通响应并统计
-func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, model, clientIP string, inputTokens int, requestBody string) {
+func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, model, clientIP string, inputTokens int, requestBody string) {
 	// 读取响应体
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -447,8 +351,8 @@ func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.
 		Provider:     p.cfg.Provider,
 		Model:        model,
 		Stream:       false,
-		Method:       "POST",
-		Path:         "/v1/chat/completions",
+		Method:       method,
+		Path:         path,
 		ClientIP:     clientIP,
 		RequestBody:  requestBody,
 		ResponseBody: string(respBody),
@@ -504,6 +408,40 @@ func copyHeaders(dst, src http.Header) {
 
 func isEventStream(contentType string) bool {
 	return strings.Contains(strings.ToLower(contentType), "text/event-stream")
+}
+
+func buildTargetURL(baseURL string, r *http.Request) string {
+	targetURL := strings.TrimRight(baseURL, "/")
+	if r.URL.Path != "" {
+		targetURL += "/" + strings.TrimLeft(r.URL.Path, "/")
+	}
+	if r.URL.RawQuery != "" {
+		targetURL += "?" + r.URL.RawQuery
+	}
+	return targetURL
+}
+
+func isHopByHopHeader(key string) bool {
+	switch key {
+	case "Connection", "Proxy-Connection", "Keep-Alive", "Proxy-Authenticate", "Proxy-Authorization", "Te", "Trailer", "Transfer-Encoding", "Upgrade":
+		return true
+	default:
+		return false
+	}
+}
+
+func parseRequestMetadata(body []byte) (map[string]interface{}, string, int) {
+	if len(body) == 0 {
+		return nil, "", 0
+	}
+
+	var reqBody map[string]interface{}
+	if err := json.Unmarshal(body, &reqBody); err != nil {
+		return nil, "", 0
+	}
+
+	model, _ := reqBody["model"].(string)
+	return reqBody, model, estimateInputTokens(reqBody)
 }
 
 // getClientIP 获取客户端 IP

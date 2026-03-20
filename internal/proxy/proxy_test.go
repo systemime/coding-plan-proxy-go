@@ -20,7 +20,7 @@ type flushingRecorder struct {
 
 func (r *flushingRecorder) Flush() {}
 
-func TestBuildHeadersUsesAcceptByMode(t *testing.T) {
+func TestBuildHeadersPreservesRequestHeadersAndOverridesAuth(t *testing.T) {
 	cfg := config.DefaultConfig()
 	cfg.DisguiseTool = "claudecode"
 
@@ -31,14 +31,35 @@ func TestBuildHeadersUsesAcceptByMode(t *testing.T) {
 		ExtraHeaders: map[string]string{},
 	}
 
-	streamHeaders := p.buildHeaders(provider, "test-key", true)
-	if got := streamHeaders["Accept"]; got != "text/event-stream" {
-		t.Fatalf("expected streaming Accept header, got %q", got)
+	requestHeaders := http.Header{
+		"Accept":        []string{"application/json"},
+		"Authorization": []string{"Bearer local-key"},
+		"X-Custom":      []string{"custom-value"},
 	}
 
-	normalHeaders := p.buildHeaders(provider, "test-key", false)
-	if got := normalHeaders["Accept"]; got != "application/json" {
-		t.Fatalf("expected JSON Accept header, got %q", got)
+	headers := p.buildHeaders(provider, "test-key", requestHeaders)
+
+	if got := headers.Get("Accept"); got != "application/json" {
+		t.Fatalf("expected Accept header to be preserved, got %q", got)
+	}
+	if got := headers.Get("Authorization"); got != "Bearer test-key" {
+		t.Fatalf("expected upstream Authorization header, got %q", got)
+	}
+	if got := headers.Get("User-Agent"); got != cfg.GetEffectiveUserAgent() {
+		t.Fatalf("expected disguised User-Agent, got %q", got)
+	}
+	if got := headers.Get("X-Custom"); got != "custom-value" {
+		t.Fatalf("expected custom header to be preserved, got %q", got)
+	}
+}
+
+func TestBuildTargetURLPreservesPathAndQuery(t *testing.T) {
+	req := httptest.NewRequest(http.MethodGet, "/chat/completions?foo=bar", nil)
+
+	got := buildTargetURL("https://example.com/api/coding/paas/v4", req)
+	want := "https://example.com/api/coding/paas/v4/chat/completions?foo=bar"
+	if got != want {
+		t.Fatalf("expected %q, got %q", want, got)
 	}
 }
 
@@ -61,7 +82,7 @@ func TestHandleStreamResponsePreservesEventBoundaries(t *testing.T) {
 		Body: io.NopCloser(strings.NewReader("data: {\"usage\":{\"completion_tokens\":3}}\n\ndata: [DONE]\n\n")),
 	}
 
-	p.handleStreamResponseWithStats(recorder, resp, time.Now(), "glm-4-flash", "127.0.0.1", 2, "{}")
+	p.handleStreamResponseWithStats(recorder, resp, time.Now(), http.MethodPost, "/chat/completions", "glm-4-flash", "127.0.0.1", 2, "{}")
 
 	body := recorder.Body.String()
 	if !strings.Contains(body, "\n\n") {
