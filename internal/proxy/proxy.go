@@ -94,7 +94,15 @@ func (p *Proxy) Forward(w http.ResponseWriter, r *http.Request) {
 	}
 	defer r.Body.Close()
 
-	_, model, inputTokens := parseRequestMetadata(body)
+	reqBody, model, inputTokens := parseRequestMetadata(body)
+
+	// 检查请求是否要求流式响应
+	isStreamRequest := false
+	if reqBody != nil {
+		if stream, ok := reqBody["stream"].(bool); ok {
+			isStreamRequest = stream
+		}
+	}
 
 	// 验证本地 API Key
 	if !p.validateLocalAPIKey(r) {
@@ -129,9 +137,44 @@ func (p *Proxy) Forward(w http.ResponseWriter, r *http.Request) {
 	// 日志记录
 	p.logForwardRequest(model, inputTokens)
 
+	// 插入待处理记录到数据库
+	pendingRecord := &storage.RequestRecord{
+		Timestamp:   startTime,
+		Provider:    p.cfg.Provider,
+		Model:       model,
+		Method:      r.Method,
+		Path:        r.URL.Path,
+		ClientIP:    clientIP,
+		RequestBody: string(body),
+		InputTokens: inputTokens,
+	}
+	recordID, err := p.storage.InsertPendingRequest(pendingRecord)
+	if err != nil {
+		p.logger.Error("插入待处理记录失败", zap.Error(err))
+	}
+
+	// 辅助函数：异步更新记录为失败状态
+	updateFailedRecord := func(statusCode int, errMsg string) {
+		if recordID > 0 {
+			go func() {
+				duration := time.Since(startTime).Milliseconds()
+				updateRecord := &storage.RequestRecord{
+					StatusCode:  statusCode,
+					Duration:    float64(duration),
+					Success:     false,
+					ErrorMsg:    errMsg,
+				}
+				if err := p.storage.UpdateRequestWithResponse(recordID, updateRecord); err != nil {
+					p.logger.Error("更新失败记录失败", zap.Error(err))
+				}
+			}()
+		}
+	}
+
 	// 创建上游请求
 	upstreamReq, err := http.NewRequestWithContext(r.Context(), "POST", targetURL, bytes.NewReader(body))
 	if err != nil {
+		updateFailedRecord(http.StatusInternalServerError, "创建请求失败")
 		p.writeError(w, http.StatusInternalServerError, "创建请求失败")
 		return
 	}
@@ -145,20 +188,24 @@ func (p *Proxy) Forward(w http.ResponseWriter, r *http.Request) {
 	resp, err := p.client.Do(upstreamReq)
 	if err != nil {
 		if strings.Contains(err.Error(), "context canceled") {
+			updateFailedRecord(499, "请求被取消")
 			p.logger.Info("请求被取消", zap.String("model", model))
 			return
 		}
+		updateFailedRecord(http.StatusBadGateway, "上游服务不可用: "+err.Error())
 		p.logger.Error("上游请求失败", zap.Error(err))
 		p.writeError(w, http.StatusBadGateway, "上游服务不可用")
 		return
 	}
 	defer resp.Body.Close()
 
-	// 处理响应
-	if resp.StatusCode == http.StatusOK && isEventStream(resp.Header.Get("Content-Type")) {
-		p.handleStreamResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, targetURL, model, clientIP, inputTokens, string(body))
+	// 处理响应 - 方案A: 同时检查请求中的 stream 参数和响应 Content-Type
+	// 如果客户端请求 stream=true，或者上游返回 SSE 格式，都使用流式处理
+	isStreamResponse := isStreamRequest || isEventStream(resp.Header.Get("Content-Type"))
+	if resp.StatusCode == http.StatusOK && isStreamResponse {
+		p.handleStreamResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, targetURL, model, clientIP, inputTokens, string(body), recordID)
 	} else {
-		p.handleNormalResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, targetURL, model, clientIP, inputTokens, string(body))
+		p.handleNormalResponseWithStats(w, resp, startTime, r.Method, r.URL.Path, targetURL, model, clientIP, inputTokens, string(body), recordID)
 	}
 }
 
@@ -262,7 +309,7 @@ func (p *Proxy) buildHeaders(provider *config.ProviderConfig, apiKey string, req
 }
 
 // handleStreamResponseWithStats 处理流式响应并统计
-func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, targetURL, model, clientIP string, inputTokens int, requestBody string) {
+func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, targetURL, model, clientIP string, inputTokens int, requestBody string, recordID int64) {
 	copyHeaders(w.Header(), resp.Header)
 
 	// 设置 SSE 头
@@ -272,14 +319,15 @@ func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
-	w.WriteHeader(resp.StatusCode)
 
-	// 获取 flusher
+	// 获取 flusher（在 WriteHeader 之前检查）
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		p.writeError(w, http.StatusInternalServerError, "不支持流式响应")
 		return
 	}
+
+	w.WriteHeader(resp.StatusCode)
 
 	// 读取并转发响应，同时收集数据
 	var responseBuf bytes.Buffer
@@ -339,30 +387,26 @@ func (p *Proxy) handleStreamResponseWithStats(w http.ResponseWriter, resp *http.
 	// 打印响应日志
 	p.logResponse(method, path, targetURL, resp.StatusCode, duration, clientIP, responseBuf.String())
 
-	// 保存记录
-	record := &storage.RequestRecord{
-		Timestamp:    startTime,
-		Provider:     p.cfg.Provider,
-		Model:        model,
-		Stream:       true,
-		Method:       method,
-		Path:         path,
-		ClientIP:     clientIP,
-		RequestBody:  requestBody,
-		ResponseBody: responseBuf.String(),
-		StatusCode:   resp.StatusCode,
-		Duration:     float64(duration),
-		InputTokens:  inputTokens,
-		OutputTokens: outputTokens,
-		TotalTokens:  totalTokens,
-		Success:      resp.StatusCode == 200,
+	// 异步更新记录（不影响响应）
+	if recordID > 0 {
+		go func() {
+			record := &storage.RequestRecord{
+				ResponseBody: responseBuf.String(),
+				StatusCode:   resp.StatusCode,
+				Duration:     float64(duration),
+				OutputTokens: outputTokens,
+				TotalTokens:  totalTokens,
+				Success:      resp.StatusCode == 200,
+			}
+			if err := p.storage.UpdateRequestWithResponse(recordID, record); err != nil {
+				p.logger.Error("更新请求记录失败", zap.Error(err))
+			}
+		}()
 	}
-
-	go p.storage.SaveRequest(record)
 }
 
 // handleNormalResponseWithStats 处理普通响应并统计
-func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, targetURL, model, clientIP string, inputTokens int, requestBody string) {
+func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.Response, startTime time.Time, method, path, targetURL, model, clientIP string, inputTokens int, requestBody string, recordID int64) {
 	// 读取响应体
 	respBody, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -401,26 +445,22 @@ func (p *Proxy) handleNormalResponseWithStats(w http.ResponseWriter, resp *http.
 	// 打印响应日志
 	p.logResponse(method, path, targetURL, resp.StatusCode, duration, clientIP, string(respBody))
 
-	// 保存记录
-	record := &storage.RequestRecord{
-		Timestamp:    startTime,
-		Provider:     p.cfg.Provider,
-		Model:        model,
-		Stream:       false,
-		Method:       method,
-		Path:         path,
-		ClientIP:     clientIP,
-		RequestBody:  requestBody,
-		ResponseBody: string(respBody),
-		StatusCode:   resp.StatusCode,
-		Duration:     float64(duration),
-		InputTokens:  inputTokens,
-		OutputTokens: outputTokens,
-		TotalTokens:  totalTokens,
-		Success:      resp.StatusCode == 200,
+	// 异步更新记录（不影响响应）
+	if recordID > 0 {
+		go func() {
+			record := &storage.RequestRecord{
+				ResponseBody: string(respBody),
+				StatusCode:   resp.StatusCode,
+				Duration:     float64(duration),
+				OutputTokens: outputTokens,
+				TotalTokens:  totalTokens,
+				Success:      resp.StatusCode == 200,
+			}
+			if err := p.storage.UpdateRequestWithResponse(recordID, record); err != nil {
+				p.logger.Error("更新请求记录失败", zap.Error(err))
+			}
+		}()
 	}
-
-	go p.storage.SaveRequest(record)
 }
 
 // writeError 写入错误响应

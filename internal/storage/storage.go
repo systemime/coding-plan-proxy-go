@@ -139,12 +139,14 @@ CREATE TABLE IF NOT EXISTS requests (
     output_tokens INTEGER DEFAULT 0,
     total_tokens INTEGER DEFAULT 0,
     success INTEGER DEFAULT 1,
-    error_msg TEXT
+    error_msg TEXT,
+    status TEXT DEFAULT 'pending'
 );
 
 CREATE INDEX IF NOT EXISTS idx_requests_timestamp ON requests(timestamp);
 CREATE INDEX IF NOT EXISTS idx_requests_provider ON requests(provider);
 CREATE INDEX IF NOT EXISTS idx_requests_model ON requests(model);
+CREATE INDEX IF NOT EXISTS idx_requests_status ON requests(status);
 	`)
 	return err
 }
@@ -188,8 +190,8 @@ func (s *Storage) SaveRequest(record *RequestRecord) error {
 		INSERT INTO requests (
 			timestamp, provider, model, stream, method, path, client_ip,
 			request_body, response_body, status_code, duration_ms,
-			input_tokens, output_tokens, total_tokens, success, error_msg
-		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+			input_tokens, output_tokens, total_tokens, success, error_msg, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'completed')
 	`,
 		record.Timestamp,
 		record.Provider,
@@ -213,6 +215,79 @@ func (s *Storage) SaveRequest(record *RequestRecord) error {
 		// 更新缓存
 		s.totalRequests++
 		s.totalInputTokens += int64(record.InputTokens)
+		s.totalOutputTokens += int64(record.OutputTokens)
+		s.totalTokens += int64(record.TotalTokens)
+	}
+
+	return err
+}
+
+// InsertPendingRequest 插入待处理请求记录（请求开始时调用）
+func (s *Storage) InsertPendingRequest(record *RequestRecord) (int64, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	result, err := s.db.Exec(`
+		INSERT INTO requests (
+			timestamp, provider, model, stream, method, path, client_ip,
+			request_body, input_tokens, status
+		) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending')
+	`,
+		record.Timestamp,
+		record.Provider,
+		record.Model,
+		record.Stream,
+		record.Method,
+		record.Path,
+		record.ClientIP,
+		record.RequestBody,
+		record.InputTokens,
+	)
+	if err != nil {
+		return 0, err
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, err
+	}
+
+	// 更新缓存（先计入请求数）
+	s.totalRequests++
+	s.totalInputTokens += int64(record.InputTokens)
+
+	return id, nil
+}
+
+// UpdateRequestWithResponse 更新请求记录（响应完成时调用）
+func (s *Storage) UpdateRequestWithResponse(id int64, record *RequestRecord) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	_, err := s.db.Exec(`
+		UPDATE requests SET
+			response_body = ?,
+			status_code = ?,
+			duration_ms = ?,
+			output_tokens = ?,
+			total_tokens = ?,
+			success = ?,
+			error_msg = ?,
+			status = 'completed'
+		WHERE id = ?
+	`,
+		record.ResponseBody,
+		record.StatusCode,
+		record.Duration,
+		record.OutputTokens,
+		record.TotalTokens,
+		record.Success,
+		record.ErrorMsg,
+		id,
+	)
+
+	if err == nil {
+		// 更新缓存
 		s.totalOutputTokens += int64(record.OutputTokens)
 		s.totalTokens += int64(record.TotalTokens)
 	}
