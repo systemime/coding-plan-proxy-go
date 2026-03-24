@@ -6,7 +6,7 @@
 
 [![Go Version](https://img.shields.io/badge/Go-1.21+-00ADD8?style=flat&logo=go)](https://golang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.8.3-green.svg)](https://github.com/systemime/coding-plan-mask)
+[![Version](https://img.shields.io/badge/version-0.8.4-green.svg)](https://github.com/systemime/coding-plan-mask)
 
 *Use your Coding Plan subscription with ANY OpenAI-compatible coding tool*
 
@@ -71,22 +71,22 @@ Download the binary for your platform from [GitHub Releases](https://github.com/
 
 ```bash
 # Linux amd64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-linux-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-linux-amd64
 chmod +x mask-ctl-linux-amd64
 sudo mv mask-ctl-linux-amd64 /usr/local/bin/mask-ctl
 
 # Linux arm64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-linux-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-linux-arm64
 chmod +x mask-ctl-linux-arm64
 sudo mv mask-ctl-linux-arm64 /usr/local/bin/mask-ctl
 
 # macOS (Darwin amd64)
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-darwin-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-darwin-amd64
 chmod +x mask-ctl-darwin-amd64
 sudo mv mask-ctl-darwin-amd64 /usr/local/bin/mask-ctl
 
 # macOS (Darwin arm64)
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-darwin-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-darwin-arm64
 chmod +x mask-ctl-darwin-arm64
 sudo mv mask-ctl-darwin-arm64 /usr/local/bin/mask-ctl
 
@@ -157,6 +157,10 @@ remove_version_path = false
 mock_models = false
 # Mock /models response content (JSON string)
 mock_models_resp = '{"object":"list","data":[{"id":"gpt-4","object":"model","owned_by":"organization"}]}'
+# Anthropic format compatibility mode (default: false)
+# When enabled, fixes null values in JSON Schema (required, enum, items, etc.)
+# Useful for API providers using Anthropic native protocol
+use_anthropic = false
 ```
 
 #### 4. Start
@@ -274,6 +278,7 @@ You can also configure via environment variables:
 | `REMOVE_VERSION_PATH` | Remove version prefix (e.g., `/v1`) from request path when forwarding (true/false) |
 | `MOCK_MODELS` | Enable mock /models endpoint response (true/false) |
 | `MOCK_MODELS_RESP` | Mock /models response content (JSON string) |
+| `USE_ANTHROPIC` | Enable Anthropic format compatibility mode (true/false) |
 
 ### ⚠️ Risk Warning
 
@@ -337,22 +342,22 @@ This project is provided for **educational and research purposes only**.
 
 ```bash
 # Linux amd64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-linux-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-linux-amd64
 chmod +x mask-ctl-linux-amd64
 sudo mv mask-ctl-linux-amd64 /usr/local/bin/mask-ctl
 
 # Linux arm64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-linux-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-linux-arm64
 chmod +x mask-ctl-linux-arm64
 sudo mv mask-ctl-linux-arm64 /usr/local/bin/mask-ctl
 
 # macOS amd64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-darwin-amd64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-darwin-amd64
 chmod +x mask-ctl-darwin-amd64
 sudo mv mask-ctl-darwin-amd64 /usr/local/bin/mask-ctl
 
 # macOS arm64
-wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.3/mask-ctl-darwin-arm64
+wget https://github.com/systemime/coding-plan-mask/releases/download/v0.8.4/mask-ctl-darwin-arm64
 chmod +x mask-ctl-darwin-arm64
 sudo mv mask-ctl-darwin-arm64 /usr/local/bin/mask-ctl
 ```
@@ -419,6 +424,10 @@ remove_version_path = false
 mock_models = false
 # 模拟 /models 响应内容 (JSON 字符串)
 mock_models_resp = '{"object":"list","data":[{"id":"gpt-4","object":"model","owned_by":"organization"}]}'
+# Anthropic 格式兼容模式 (默认: false)
+# 启用后会修复请求体中的 schema 字段，将 null 转为正确的默认值
+# 适用于使用 Anthropic 原生协议的 API 供应商
+use_anthropic = false
 ```
 
 #### 4. 启动
@@ -518,6 +527,7 @@ curl http://127.0.0.1:8787/stats
 | `REMOVE_VERSION_PATH` | 转发时移除请求路径中的版本前缀（如 `/v1`）(true/false) |
 | `MOCK_MODELS` | 启用模拟 /models 端点响应 (true/false) |
 | `MOCK_MODELS_RESP` | 模拟 /models 响应内容 (JSON 字符串) |
+| `USE_ANTHROPIC` | 启用 Anthropic 格式兼容模式 (true/false) |
 
 ### ⚠️ 风险预警
 

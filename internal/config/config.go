@@ -77,6 +77,9 @@ type APIConfig struct {
 	MockModels bool `toml:"mock_models"`
 	// 模拟 /models 响应内容 (JSON 字符串)
 	MockModelsResp string `toml:"mock_models_resp"`
+	// Anthropic 格式兼容模式
+	// 启用后会修复请求体中的 schema 字段，将 null 转为正确的默认值
+	UseAnthropic bool `toml:"use_anthropic"`
 }
 
 // Config 应用配置（运行时使用）
@@ -107,6 +110,7 @@ type Config struct {
 	RemoveVersionPath bool
 	MockModels        bool
 	MockModelsResp    string
+	UseAnthropic      bool // Anthropic 格式兼容模式
 
 	configPath string
 }
@@ -305,6 +309,7 @@ func LoadConfig(path string) (*Config, error) {
 	cfg.CustomAuthPrefix = cfgFile.API.AuthPrefix
 	cfg.RemoveVersionPath = cfgFile.API.RemoveVersionPath
 	cfg.MockModels = cfgFile.API.MockModels
+	cfg.UseAnthropic = cfgFile.API.UseAnthropic
 	if cfgFile.API.MockModelsResp != "" {
 		cfg.MockModelsResp = cfgFile.API.MockModelsResp
 	}
@@ -362,6 +367,9 @@ func (c *Config) loadFromEnv() {
 	if v := os.Getenv("MOCK_MODELS_RESP"); v != "" {
 		c.MockModelsResp = v
 	}
+	if v := os.Getenv("USE_ANTHROPIC"); strings.ToLower(v) == "true" {
+		c.UseAnthropic = true
+	}
 }
 
 // Set 设置配置项
@@ -412,6 +420,8 @@ func (c *Config) Set(key string, value string) error {
 		c.MockModels = strings.ToLower(value) == "true"
 	case "mock_models_resp":
 		c.MockModelsResp = value
+	case "use_anthropic":
+		c.UseAnthropic = strings.ToLower(value) == "true"
 	default:
 		return fmt.Errorf("未知配置项: %s", key)
 	}
@@ -530,6 +540,7 @@ func (c *Config) GetSafe() map[string]interface{} {
 		"remove_version_path":    c.RemoveVersionPath,
 		"mock_models":            c.MockModels,
 		"mock_models_resp":       c.MockModelsResp,
+		"use_anthropic":          c.UseAnthropic,
 	}
 }
 
@@ -639,6 +650,10 @@ remove_version_path = false
 mock_models = false
 # 模拟 /models 响应内容 (JSON 字符串)
 mock_models_resp = '{"object":"list","data":[{"id":"gpt-4","object":"model","owned_by":"organization"}]}'
+# Anthropic 格式兼容模式 (默认 false)
+# 启用后会修复请求体中的 schema 字段，将 null 转为正确的默认值
+# 适用于使用 Anthropic 原生协议的 API 供应商
+use_anthropic = false
 `
 
 	return os.WriteFile(path, []byte(defaultContent), 0644)

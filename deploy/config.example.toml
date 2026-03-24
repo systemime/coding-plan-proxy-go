@@ -66,6 +66,10 @@ coding_url = ""
 auth_header = ""
 # 认证前缀 (留空使用默认 "Bearer ")
 auth_prefix = ""
+# Anthropic 格式兼容模式 (默认 false)
+# 启用后会修复请求体中的 schema 字段，将 null 转为正确的默认值
+# 适用于使用 Anthropic 原生协议的 API 供应商
+use_anthropic = false
 
 # ============================================================================
 # 服务商默认 URL 参考

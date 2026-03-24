@@ -5,6 +5,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -185,7 +186,7 @@ func TestHandleStreamResponsePreservesEventBoundaries(t *testing.T) {
 		Body: io.NopCloser(strings.NewReader("data: {\"usage\":{\"completion_tokens\":3}}\n\ndata: [DONE]\n\n")),
 	}
 
-	p.handleStreamResponseWithStats(recorder, resp, time.Now(), http.MethodPost, "/chat/completions", "https://api.example.com/chat/completions", "glm-4-flash", "127.0.0.1", 2, "{}")
+	p.handleStreamResponseWithStats(recorder, resp, time.Now(), http.MethodPost, "/chat/completions", "https://api.example.com/chat/completions", "glm-4-flash", "127.0.0.1", 2, "{}", 0)
 
 	body := recorder.Body.String()
 	if !strings.Contains(body, "\n\n") {
@@ -400,6 +401,156 @@ func TestMockModelsWithRemoveVersionPath(t *testing.T) {
 		t.Run(tt.path, func(t *testing.T) {
 			if p.isModelsRequest(tt.path) != tt.shouldMock {
 				t.Fatalf("path %s: expected shouldMock=%v", tt.path, tt.shouldMock)
+			}
+		})
+	}
+}
+
+func TestFixAnthropicSchema(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    map[string]interface{}
+		expected map[string]interface{}
+	}{
+		{
+			name: "fix required null to empty array",
+			input: map[string]interface{}{
+				"required": nil,
+			},
+			expected: map[string]interface{}{
+				"required": []interface{}{},
+			},
+		},
+		{
+			name: "fix enum null to empty array",
+			input: map[string]interface{}{
+				"enum": nil,
+			},
+			expected: map[string]interface{}{
+				"enum": []interface{}{},
+			},
+		},
+		{
+			name: "fix items null to default schema",
+			input: map[string]interface{}{
+				"items": nil,
+			},
+			expected: map[string]interface{}{
+				"items": map[string]interface{}{"type": "string"},
+			},
+		},
+		{
+			name: "fix nested schema",
+			input: map[string]interface{}{
+				"tools": []interface{}{
+					map[string]interface{}{
+						"function": map[string]interface{}{
+							"parameters": map[string]interface{}{
+								"required": nil,
+								"properties": map[string]interface{}{
+									"query": map[string]interface{}{
+										"type": "string",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+			expected: map[string]interface{}{
+				"tools": []interface{}{
+					map[string]interface{}{
+						"function": map[string]interface{}{
+							"parameters": map[string]interface{}{
+								"required": []interface{}{},
+								"properties": map[string]interface{}{
+									"query": map[string]interface{}{
+										"type": "string",
+									},
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "preserve non-null values",
+			input: map[string]interface{}{
+				"required": []interface{}{"query"},
+				"type":     "object",
+			},
+			expected: map[string]interface{}{
+				"required": []interface{}{"query"},
+				"type":     "object",
+			},
+		},
+		{
+			name: "fix properties null",
+			input: map[string]interface{}{
+				"properties": nil,
+			},
+			expected: map[string]interface{}{
+				"properties": map[string]interface{}{},
+			},
+		},
+		{
+			name: "fix anyOf/allOf/oneOf null",
+			input: map[string]interface{}{
+				"anyOf": nil,
+				"allOf": nil,
+				"oneOf": nil,
+			},
+			expected: map[string]interface{}{
+				"anyOf": []interface{}{},
+				"allOf": []interface{}{},
+				"oneOf": []interface{}{},
+			},
+		},
+		{
+			name: "add missing required for object type",
+			input: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+			},
+			expected: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []interface{}{},
+			},
+		},
+		{
+			name: "preserve existing required for object type",
+			input: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []interface{}{"name"},
+			},
+			expected: map[string]interface{}{
+				"type":       "object",
+				"properties": map[string]interface{}{},
+				"required":   []interface{}{"name"},
+			},
+		},
+		{
+			name: "do not add required for non-object type",
+			input: map[string]interface{}{
+				"type": "string",
+			},
+			expected: map[string]interface{}{
+				"type": "string",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := fixAnthropicSchema(tt.input)
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if !reflect.DeepEqual(result, tt.expected) {
+				t.Fatalf("expected %v, got %v", tt.expected, result)
 			}
 		})
 	}

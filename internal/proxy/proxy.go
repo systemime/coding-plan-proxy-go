@@ -96,6 +96,28 @@ func (p *Proxy) Forward(w http.ResponseWriter, r *http.Request) {
 
 	reqBody, model, inputTokens := parseRequestMetadata(body)
 
+	// Anthropic 格式兼容模式：修复请求体中的 schema 字段
+	if p.cfg.UseAnthropic && reqBody != nil {
+		originalLen := len(body)
+		if fixedBody, err := fixAnthropicSchema(reqBody); err == nil {
+			if newBody, err := json.Marshal(fixedBody); err == nil {
+				body = newBody
+				if p.cfg.Debug {
+					p.logger.Debug("Anthropic schema 修复完成",
+						zap.Int("original_len", originalLen),
+						zap.Int("fixed_len", len(newBody)),
+						zap.Int("diff", len(newBody)-originalLen))
+					// 输出 tools 部分的结构用于调试
+					if tools, ok := fixedBody["tools"]; ok {
+						if toolsBytes, err := json.Marshal(tools); err == nil && len(toolsBytes) < 5000 {
+							p.logger.Debug("修复后的 tools", zap.String("tools", string(toolsBytes)))
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// 检查请求是否要求流式响应
 	isStreamRequest := false
 	if reqBody != nil {
@@ -249,6 +271,9 @@ func (p *Proxy) handleMockModels(w http.ResponseWriter, r *http.Request, startTi
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte(p.cfg.MockModelsResp))
+
+	// 打印终端日志
+	fmt.Fprintf(p.logOutput(), "时间：%s Mock Models: 路径=%s 客户端=%s\n", humanLogTime(), r.URL.Path, clientIP)
 
 	// 打印日志
 	p.logResponse(r.Method, r.URL.Path, "mock://models", http.StatusOK, duration, clientIP, p.cfg.MockModelsResp)
@@ -708,4 +733,221 @@ func estimateInputTokens(reqBody map[string]interface{}) int {
 		return totalChars / 2 // 粗略估算
 	}
 	return 0
+}
+
+// fixAnthropicSchema 修复 Anthropic 格式请求中的 schema 字段
+// 将 null 值转换为正确的默认值，以兼容 OpenAI 格式的 API
+func fixAnthropicSchema(data map[string]interface{}) (map[string]interface{}, error) {
+	// 第一步：修复 null 值
+	fixed := fixSchemaValue(data, "").(map[string]interface{})
+	// 第二步：转换 Anthropic 格式到 OpenAI 格式
+	fixed = convertAnthropicToOpenAI(fixed)
+	return fixed, nil
+}
+
+// convertAnthropicToOpenAI 将 Anthropic 格式的 tools 转换为 OpenAI 格式
+// Anthropic: tools[].input_schema
+// OpenAI: tools[].function.parameters
+func convertAnthropicToOpenAI(data map[string]interface{}) map[string]interface{} {
+	result := make(map[string]interface{})
+
+	for key, value := range data {
+		if key == "tools" {
+			if tools, ok := value.([]interface{}); ok {
+				newTools := make([]interface{}, len(tools))
+				for i, tool := range tools {
+					newTools[i] = convertToolToOpenAI(tool)
+				}
+				result[key] = newTools
+			} else {
+				result[key] = value
+			}
+		} else {
+			result[key] = value
+		}
+	}
+
+	return result
+}
+
+// convertToolToOpenAI 转换单个 tool 定义为 OpenAI 格式
+func convertToolToOpenAI(tool interface{}) interface{} {
+	toolMap, ok := tool.(map[string]interface{})
+	if !ok {
+		return tool
+	}
+
+	result := make(map[string]interface{})
+	for k, v := range toolMap {
+		result[k] = v
+	}
+
+	// 检查是否有 input_schema 字段（Anthropic 格式）
+	if inputSchema, ok := result["input_schema"]; ok {
+		// 将 input_schema 移动到 function.parameters
+		funcDef := make(map[string]interface{})
+		if name, ok := result["name"].(string); ok {
+			funcDef["name"] = name
+		}
+		if desc, ok := result["description"].(string); ok {
+			funcDef["description"] = desc
+		}
+
+		// 修复 input_schema 中的 null 值
+		fixedSchema := fixSchemaValue(inputSchema, "input_schema")
+		funcDef["parameters"] = fixedSchema
+
+		// 删除原有的 Anthropic 格式字段
+		delete(result, "input_schema")
+
+		result["type"] = "function"
+		result["function"] = funcDef
+
+		// 删除可能重复的字段
+		delete(result, "name")
+		delete(result, "description")
+	}
+
+	// 如果有 function 字段，递归处理
+	if funcDef, ok := result["function"].(map[string]interface{}); ok {
+		fixedFunc := make(map[string]interface{})
+		for k, v := range funcDef {
+			if k == "parameters" {
+				fixedFunc[k] = fixSchemaValue(v, "function.parameters")
+			} else {
+				fixedFunc[k] = v
+			}
+		}
+		result["function"] = fixedFunc
+	}
+
+	return result
+}
+
+// fixSchemaValue 递归修复 schema 中的 null 值
+// path 用于调试，记录当前处理的路径
+func fixSchemaValue(value interface{}, path string) interface{} {
+	switch v := value.(type) {
+	case map[string]interface{}:
+		result := make(map[string]interface{})
+		for key, val := range v {
+			currentPath := path + "." + key
+			// 处理特定字段的 null 值
+			if val == nil {
+				switch key {
+				case "required", "enum", "examples", "prefixItems", "context":
+					// 数组类型字段: null → []
+					result[key] = []interface{}{}
+				case "items":
+					// items: null → items: {"type": "string"}
+					result[key] = map[string]interface{}{"type": "string"}
+				case "properties", "additionalProperties":
+					// 对象类型字段: null → {}
+					if key == "additionalProperties" {
+						result[key] = true
+					} else {
+						result[key] = map[string]interface{}{}
+					}
+				case "anyOf", "allOf", "oneOf":
+					// 组合类型: null → []
+					result[key] = []interface{}{}
+				case "default":
+					// default: null → 删除该字段
+					continue
+				default:
+					// 对于 schema 对象中的其他 null 字段，检查是否可能是数组类型
+					// JSON Schema 中常见的数组字段
+					if isArrayField(key) {
+						result[key] = []interface{}{}
+					} else if isObjectField(key) {
+						// 对象类型字段: null → {}
+						result[key] = map[string]interface{}{}
+					} else {
+						// 保留 null
+						result[key] = nil
+					}
+				}
+			} else {
+				// 递归处理嵌套对象
+				result[key] = fixSchemaValue(val, currentPath)
+			}
+		}
+
+		// 对于 JSON Schema 对象（有 type 字段的对象），确保 required 字段存在
+		if schemaType, ok := result["type"].(string); ok && schemaType == "object" {
+			if _, hasRequired := result["required"]; !hasRequired {
+				// 添加空的 required 数组
+				result["required"] = []interface{}{}
+			}
+		}
+
+		return result
+	case []interface{}:
+		// 递归处理数组
+		result := make([]interface{}, len(v))
+		for i, item := range v {
+			result[i] = fixSchemaValue(item, path+"[]")
+		}
+		return result
+	default:
+		return value
+	}
+}
+
+// isArrayField 判断字段名是否通常期望数组类型
+func isArrayField(key string) bool {
+	arrayFields := map[string]bool{
+		"required":        true,
+		"enum":            true,
+		"examples":        true,
+		"prefixItems":     true,
+		"anyOf":           true,
+		"allOf":           true,
+		"oneOf":           true,
+		"context":         true,
+		"commands":        true,
+		"options":         true,
+		"arguments":       true,
+		"parameters":      true,
+		"variables":       true,
+		"includes":        true,
+		"excludes":        true,
+		"items":           true, // 虽然 items 通常是对象，但也可能是数组（tuple items）
+		"defs":            true,
+		"definitions":     true,
+		"$defs":           true,
+		"schemas":         true,
+		"security":        true,
+		"servers":         true,
+		"paths":           true,
+		"tags":            true,
+		"externalDocs":    true,
+		"discriminator":   true,
+		"xml":             true,
+		"deprecated":      true,
+		"readOnly":        true,
+		"writeOnly":       true,
+		"contentMediaType": true,
+		"contentEncoding": true,
+		"if":              true,
+		"then":            true,
+		"else":            true,
+	}
+	return arrayFields[key]
+}
+
+// isObjectField 判断字段名是否通常期望对象类型
+func isObjectField(key string) bool {
+	objectFields := map[string]bool{
+		"properties":          true,
+		"additionalProperties": true,
+		"patternProperties":   true,
+		"dependencies":        true,
+		"dependentSchemas":    true,
+		"propertyNames":       true,
+		"unevaluatedItems":    true,
+		"unevaluatedProperties": true,
+		"contentSchema":       true,
+	}
+	return objectFields[key]
 }
